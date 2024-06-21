@@ -1,0 +1,120 @@
+tag,gene,description,include
+EcMero2_C_APECO78_00485_0.95_1,metL,,x
+EcMero2_C_APECO78_02145_0.92_1,PmbA,,x
+EcMero2_C_APECO78_03920_0.97_1,FtsA,,x
+EcMero2_C_APECO78_05715_0.97_1,ClpX,,x
+EcMero2_C_APECO78_16235_0.95_1,ppx,exopolyphosphatase,x
+EcMero2_C_APECO78_17535_0.95_1,relA,(p)ppGpp synthetase I,x
+EcMero2_C_APECO78_19825_0.97_1,KdsD,D-arabinose 5-phosphate isomerase,x
+EcMero2_C_APECO78_20780_0.95_1,IgaA,putative inner membrane protein,x
+EcMero2_Rup_APECO78_00325_0.97_1,cpxP,,x
+EcMero2_Rup_APECO78_04245_0.95_1,degP,serine endoprotease,x
+EcMero2_Rup_APECO78_05395_0.92_1,yaiY,hypothetical protein,x
+EcMero2_Rup_APECO78_05500_0.97_1,phoB,,x
+EcMero2_Rup_APECO78_09510_0.97_1,yfcJ,,x
+EcMero2_Rup_APECO78_09705_0.92_1,ymgD,,x
+EcMero2_Rup_APECO78_09710_0.92_1,ymgG,,x
+EcMero2_Rup_APECO78_12545_0.97_0.95,spy,ATP-independent periplasmic protein-refolding chaperone,x
+EcMero2_Rup_APECO78_21920_0.92_1,waaH,UDP-glucuronate:LPS(HepIII) glycosyltransferase,x
+EcMero2_Rup_APECO78_22510_0.92_1,pstS,phosphate_ABC_transporter_substrate-binding_protein,x
+EcCip3_C_b0176_0.97,,,x
+EcCip3_C_b0761_0.92,,,x
+EcCip3_C_b1280_0.95,,,x
+EcCip3_C_b1827_0.95,,,x
+EcCip3_C_b2065_0.92,,,x
+EcCip3_C_b2515_0.95,,,x
+EcCip3_C_b2516_0.97,,,x
+EcCip3_C_b2829_0.97,,,x
+EcCip3_C_b2830_0.97,,,x
+EcCip3_C_b3252_0.97,,,x
+EcCip3_Rdn_b3771_0.92,ilvD,,x
+EcCip3_Rup_b0958_0.97,sulA,,x
+EcCip3_Rup_b1061_0.95,dinI,,x
+EcCip3_Rup_b1183_0.92,umuD,,x
+EcCip3_Rup_b1848_0.92,yebG,,x
+EcCip3_Rup_b2616_0.95,recN,,x
+EcCip3_Rup_b2699_0.97,recA,,x
+EcCip3_Rup_b3645_0.92_0.95,dinD,,x
+EcCip3_Rup_b3832_0.92,rmuC,,x
+EcCip3_Rup_b4043_0.97,lexA,,x
+EcGent4_C_b1272_0.92,,,x
+EcGent4_C_b1719_0.97,,,x
+EcGent4_C_b2821_0.95,,,x
+EcGent4_C_b2830_0.97,,,x
+EcGent4_C_b2910_0.97,,,x
+EcGent4_C_b3040_0.97_0.95,,,x
+EcGent4_C_b4041_0.95,,,x
+EcGent4_C_b4175_0.97,,,x
+EcGent4_C_b4220_0.97,,,x
+EcGent4_C_b4255_0.97_0.95,,,x
+EcGent4_Rup_b0019_0.97_0.95,nhaA,,x
+EcGent4_Rup_b0631_0.97,ybeD,,x
+EcGent4_Rup_b1305_0.92,pspB,,x
+EcGent4_Rup_b1306_0.92,pspC,,x
+EcGent4_Rup_b3400_0.95,hslR,,x
+EcGent4_Rup_b3401_0.92,hslO,,x
+EcGent4_Rup_b3932_0.92,hslV,,x
+EcGent4_Rup_b4062_0.92,soxS,,x
+EcGent4_Rup_b4242_0.92,mgtA,,x
+EcGent4_Rup_b4550_0.92,arfA,,
+EcGent4_Rup_b3686e_0.92,htpE,,
+EcGent4_Rup_b3687e_0.97,hslT,,
+KpMero4_C_KPN_00050_0.97,,,x
+KpMero4_C_KPN_00098_0.97,,,x
+KpMero4_C_KPN_00100_0.97,,,x
+KpMero4_C_KPN_01276_0.92,,,x
+KpMero4_C_KPN_02846_0.95,,,x
+KpMero4_C_KPN_03317_0.92,,,x
+KpMero4_C_KPN_03634_0.92,,,x
+KpMero4_C_KPN_04666_0.97,,,x
+KpMero4_R01up_KPN_01226_0.97,spy,,x
+KpMero4_R02up_KPN_01107_0.97,ycfJ,,x
+KpMero4_R03up_KPN_02345_0.95,htpX,,x
+KpMero4_R04up_KPN_02742_0.97,ypeC,,x
+KpMero4_R05dn_KPN_02241_0.92,ychH,,x
+KpMero4_R06up_KPN_03358_0.92,yggG,,x
+KpMero4_R07up_KPN_03934_0.92,bax,,x
+KpMero4_R08dn_KPN_00868_0.92,yliH,,x
+KpMero4_R09up_KPN_02342_0.97,HA,,x
+KpMero4_R10up_KPN_00833_0.97,ybiJ,,x
+KpCip4_C_KPHS_08300_0.95,,,x
+KpCip4_C_KPHS_08670_0.92,,,x
+KpCip4_C_KPHS_15300_0.97,,,x
+KpCip4_C_KPHS_20110_0.95,,,x
+KpCip4_C_KPHS_29220_0.95,,,x
+KpCip4_C_KPHS_33420_0.95,,,x
+KpCip4_C_KPHS_34080_0.95,,,x
+KpCip4_C_KPHS_37030_0.97,,,x
+KpCip4_C_KPHS_42920_0.97,,,x
+KpCip4_C_KPHS_44560_0.95,,,x
+KpCip4_C_KPHS_47740_0.92,,,x
+KpCip4_R01up_KPHS_33810_0.97,yebG,SOS regulon DNA damage-inducible protein,x
+KpCip4_R02up_KPHS_02830_0.97,ssb,single-strand DNA-binding protein,x
+KpCip4_R03up_KPHS_41020_0.92,recA,recombinase A,x
+KpCip4_R04dn_KPHS_18380_0.97,ompF,,x
+KpCip4_R05up_KPHS_37080_0.97,nrdA,ribonucleoside-diphosphate reductase subunit alpha,x
+KpCip4_R06up_KPHS_41010_0.95,recX,,x
+KpCip4_R07up_KPHS_02820_0.97,uvrA,,x
+KpCip4_R08up_KPHS_03450_0.92,phnA,,x
+KpCip4_R09up_KPHS_53000_0.97,pstS,,x
+KpCip4_R10up_KPHS_37090_0.97,nrdB,,x
+KpCip4_R11dn_KPHS_31980_0.95,PRK10947,DNA-binding transcriptional regulator H-NS,
+KpCip4_R12up_KPHS_40580_0.95,bamE,,
+KpGent2_C_KP1_0027_0.97,,,x
+KpGent2_C_KP1_0117_0.95,,,x
+KpGent2_C_KP1_0191_0.92,,,x
+KpGent2_C_KP1_0490_0.97,,,x
+KpGent2_C_KP1_0974_0.97,,,x
+KpGent2_C_KP1_1702_0.97,,,x
+KpGent2_C_KP1_4377_0.97,,,x
+KpGent2_C_KP1_4445_0.97,,,x
+KpGent2_Rdn_KP1_3311_0.97,adhE,,x
+KpGent2_Rdn_KP1_3910_0.95,nuoL,,x
+KpGent2_Rdn_KP1_3919_0.92,nuoE,,x
+KpGent2_Rup_KP1_0325_0.92,soxS,,x
+KpGent2_Rup_KP1_0837_0.95,nhaA,,x
+KpGent2_Rup_KP1_0838_0.92,nhaR,,x
+KpGent2_Rup_KP1_2658_0.92,marA,,x
+KpGent2_Rup_KP1_3472_0.95,htpX,,x
+KpGent2_Rup_KP1_5467_0.97,ibpB,,x
+KpGent2_Rup_KP1_5468_0.95,ibpA,,x

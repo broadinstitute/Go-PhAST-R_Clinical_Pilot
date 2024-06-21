@@ -1,0 +1,1979 @@
+---
+title: "HeatMap"
+author: "Eleanor Young"
+date: "8/31/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+Simple gene expression scatterplots and l2fc heatmaps from original data.
+
+```{r setup, include=FALSE}
+setwd("C:/Users/eyoung/OneDrive - The Broad Institute/Documents/R")
+
+#library import
+if(!require(gplots)) install.packages("gplots")
+library(gplots)
+if(!require(RColorBrewer)) install.packages("RColorBrewer")
+library(RColorBrewer)
+if(!require(knitr)) install.packages("knitr")
+library(knitr)
+if(!require(tidyverse)) install.packages("tidyverse")
+library(tidyverse)
+if(!require(patchwork)) install.packages("patchwork")
+library(patchwork)
+if(!require(egg)) install.packages("egg")
+library(egg)
+if(!require(gghighlight)) install.packages("gghighlight")
+library(gghighlight)
+if(!require(ggrepel)) install.packages("ggrepel")
+library(ggrepel)
+if(!require(rmarkdown)) install.packages("rmarkdown")
+library(rmarkdown)
+if(!require(ggh4x)) install.packages("ggh4x")
+library(ggh4x)
+if(!require(caret)) install.packages("caret")
+library(caret)
+if(!require(e1071)) install.packages("e1071")
+library(e1071)
+if(!require(pROC)) install.packages("pROC")
+library(pROC)
+if(!require(viridis)) install.packages("viridis")
+library(viridis)
+if(!require(readxl)) install.packages("readxl")
+library(readxl)
+
+#file import
+remove_data = c("KpCip4_R11dn_KPHS_31980_0.95", "KpCip4_R12up_KPHS_40580_0.95") #, "EcGent4_Rup_b4550_0.92", "EcGent4_Rup_b3686e_0.92",        "EcGent4_Rup_b3687e_0.97")
+
+dir = ("G:/.shortcut-targets-by-id/1kcvyeOXWFbS3VaeKPHnjXmRIYRNSmc_q/Bhattacharyya_lab/Eleanor/MGH_BCx_GoPhASTR_pilot")
+dir2 = ("G:/.shortcut-targets-by-id/1kcvyeOXWFbS3VaeKPHnjXmRIYRNSmc_q/Bhattacharyya_lab/Eleanor/MGH_BCx_GoPhASTR_pilot/Background_Threshold_2")
+known_data_all <- read.csv(paste0(dir, "/", "mel_data/AllMelpaperData.csv"), row.names = 1) %>% filter(!(tag %in% remove_data))
+known_data <- read.csv(paste0(dir2, "/all_mel_data_SPD.csv"), row.names = 1)
+dfnames <- list.files(path = paste0(dir2, "/CompositeCSVs_l2fc"), pattern = "*.csv")
+SPD_data <- read.csv(paste0(dir2, "/MGH_AST_spd.csv"))
+clin_data =  read.csv(paste0(dir, "/ClinData.csv"))
+clin_data = clin_data %>%  #view()
+  mutate(Drug = gsub(samples, pattern = ".*_", replacement = "")) %>%
+  filter(!(Drug == "cz" & is.na(MIC))) %>%
+  mutate(sample = gsub(samples, pattern = "_.*", replacement = ""),
+         MIC = ifelse(is.na(MIC), substr(Susceptibility, 1, 1), MIC),
+         MIC2 = MIC,
+         MIC = factor(MIC, 
+                      levels = c('0.12', '0.25', '0.5', '1', '2', '4', '4/4', '4/8', '8/4','16/4', '64/4', '128/4','8', '16', '32', '64', "S", "I", "R")),
+         Susceptibility = factor(Susceptibility, levels = rev(c("Resistant", "Intermediate",  "Susceptible")))) %>% #,
+         #clin_call = 1) %>%
+  arrange(MIC, Susceptibility) %>%
+  #arrange(spd) %>%
+  select(!c("drug")) %>%
+  left_join(select(SPD_data, c("samples", "spd")), by = "samples")
+
+data_BL <- read.csv(paste0(dir2, "/NSTGsample_BLase.csv"), row.names = 1)
+data_CRE <- read.csv(paste0(dir2, "/NSTGsample_CREnorm_processed.csv"), row.names = 1)
+
+#source of functions, colorscheme, and dataframe storage
+source(paste0(dir, "/","HeatMapFuncs.R"))
+
+# gene names
+gene_names = read.csv(paste0(dir, "/probe_to_gene_names.csv"))
+
+```
+
+```{r variables}
+#antibiotics used
+abx <- c("Cip", "Levo", "Gent", "Cz", "Cro", "Atm", "Tzp", "Fep", "Etp", "Mem")
+abx2 = c("Cip", "Gent", "Levo", "Amp", "Cefaz", "Ctx", "Aztr", "Pip", "Erta", "Mero")
+#beta lactams ordered by strength
+bls <- c("Cz", "Cro", "Atm", "Tzp", "Fep", "Etp", "Mem")
+#species used
+species <- c("K. pneumoniae", "E. coli")
+#drug classes
+classes <- c("Bl", "Fq", "Gent")
+#make data frame
+output_data_pivoted = as.data.frame(matrix(nrow = 0, ncol = 10))
+colnames(output_data_pivoted) = c('tag', 'id', 'value', 'species', 'MIC', 'Susceptibility', 'spd', 'Drug', 'sample', 'BLase')
+corr_data_pivoted = as.data.frame(matrix(nrow = 0, ncol = 10))
+colnames(corr_data_pivoted) = c('tag', 'id', 'value', 'species', 'MIC', 'Susceptibility', 'spd', 'Drug', 'sample', 'treated')
+```
+
+```{r compute, warning=FALSE}
+
+corr_list = list()
+
+for ( i in dfnames){
+  
+  output_list[[ (gsub(i, pattern = "_l2fc.csv", replacement = "")) ]] = 
+    read.csv(paste0(dir2, "/CompositeCSVs_l2fc/", i), row.names = 1)
+  
+  # norm_list[[ (gsub(i, pattern = "_l2fc.csv", replacement = "")) ]] = 
+  #   read.csv(paste0(dir2, "/CompositeCSVs_normalized/", 
+  #                   (gsub(i, pattern = "_l2fc.csv", replacement = "_normalized.csv"))))
+  
+  corr_list[[ (gsub(i, pattern = "_l2fc.csv", replacement = "")) ]] = 
+    read.csv(paste0(dir2, "/CompositeCSVs_corrected/", 
+                    (gsub(i, pattern = "_l2fc.csv", replacement = "_corrected.csv"))))
+}
+
+
+# for ( j in grep(gsub(dfnames, pattern = "_l2fc.csv", replacement = ""), pattern = "Fq|Bl", value = T, invert = T) ){
+#   temp = output_list[[j]]
+#   d = str_to_lower(substr(j, 3, nchar(j)))
+#   output_data_pivoted = temp %>% mutate( tag = row.names(temp) ) %>%
+#     pivot_longer(cols =  contains("MGH"), names_to = "id", values_to = "value") %>% 
+#     left_join(select(filter(clin_data, Drug == d), !c("s")), by = c("id" = "samples")) %>%
+#     left_join( select(filter(data_BL, present == 1), c("sample", "BLase")), by = "sample") %>%
+#     mutate(BLase = ifelse(is.na(BLase), "none", BLase)) %>%
+#     as.data.frame() %>%
+#     rbind(output_data_pivoted)
+# }
+
+for ( j in grep(gsub(dfnames, pattern = "_l2fc.csv", replacement = ""), pattern = "Fq|Bl", value = T, invert = T) ){
+  
+  d = str_to_lower(substr(j, 3, nchar(j)))
+  
+  temp = corr_list[[j]]
+  temp = temp[!(grepl(temp$X, pattern = "NA") | is.na(temp$X)),]
+  corr_data_pivoted = temp %>% 
+    rename(tag = "X") %>%
+    pivot_longer(cols =  contains("MGH"), names_to = "id", values_to = "value") %>% #view()
+    mutate(
+      sample = gsub(id, pattern = "_.*", replacement = ""),
+      treated = ifelse(grepl(id, pattern = "_[0-9]"), "-", "+")
+      ) %>% 
+    left_join(select(filter(clin_data, Drug == d), !c("s")), by = "sample") %>%
+    as.data.frame() %>%
+    rbind(corr_data_pivoted)
+  
+  temp = output_list[[j]]
+  output_data_pivoted = temp %>% mutate( tag = row.names(temp) ) %>%
+    pivot_longer(cols =  contains("MGH"), names_to = "id", values_to = "value") %>% 
+    left_join(select(filter(clin_data, Drug == d), !c("s")), by = c("id" = "samples")) %>%
+    left_join( select(filter(data_BL, present == 1), c("sample", "BLase")), by = "sample") %>%
+    mutate(BLase = ifelse(is.na(BLase), "none", BLase)) %>%
+    as.data.frame() %>%
+    rbind(output_data_pivoted)
+
+}
+
+```
+
+```{r data_dependent_variables}
+strains <-
+  c( unique(unlist(strsplit( colnames(output_list[["EcBl"]]) , "_.*"))),
+     unique(unlist(strsplit( colnames(output_list[["KpBl"]]) , "_.*"))))
+titles <- c( rep("Ec", length(colnames(output_list[["EcBl"]]))/7), rep("Kp", length(colnames(output_list[["KpBl"]]))/7))
+#https://statisticsglobe.com/extract-numbers-from-character-string-vector-in-r
+
+sample_prefixes = rep("MGHBC", length(strains))
+sample_suffixes = regmatches(strains, gregexpr("[[:digit:]]+.*", strains)) %>% unlist() %>% gsub(pattern = "[[:digit:]]+", replacement = "")
+sample_numbers = as.numeric(unlist(regmatches(strains, gregexpr("[[:digit:]]+", strains))))
+
+sample_renaming_df = data.frame(sample_prefixes, sample_numbers, sample_suffixes, strains, titles) %>% 
+  #mutate(name = paste0(sample_prefixes, sample_numbers, sample_suffixes)) %>% 
+  arrange(sample_numbers)
+
+numeric_ordered_samples = sample_renaming_df  %>% pull(strains)
+```
+
+
+```{r more_data}
+output_data_pivoted_2 = 
+  output_data_pivoted %>%
+  left_join(gene_names, by = "tag") %>%
+  mutate(drug = Drug,
+         class = ifelse(drug %in% c("gent","Gent"),"Gent",
+                        ifelse(drug %in% c("cip", "levo", "Cip", "Levo"), "Fq", "Beta Lactam")),
+         drug = recode(drug,
+         "Cefaz" = "Cefazolin",              
+         "cz" = "Cefazolin",
+         "Ctx"= "Ceftriaxone",
+         "cro"= "Ceftriaxone",
+         "Aztr" = "Aztreonam",
+         "atm" = "Aztreonam", 
+         "fep" = "Cefepime",
+         "Erta" = "Ertapenem",
+         "etp" = "Ertapenem", 
+         "Mero" = "Meropenem",
+         "mem" = "Meropenem",
+         "Pip" = "Piperacillin Tazobactam",
+         "tzp" = "Piperacillin Tazobactam",
+         "Cip" = "Ciprofloxacin",
+         "cip" = "Ciprofloxacin",
+         "Gent" = "Gentamicin",
+         "gent" = "Gentamicin",
+         "Levo" = "Levofloxacin",
+         "levo" = "Levofloxacin"),
+         class = factor(recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside"),
+                        levels = c("Beta Lactam", "Fluoroquinolone", "Aminoglycoside")),
+         drug = factor(drug, 
+                       levels = c("Gentamicin", "Ciprofloxacin", "Levofloxacin", "Cefazolin", "Ceftriaxone", "Aztreonam", "Piperacillin Tazobactam", "Cefepime", "Ertapenem", "Meropenem")))
+
+output_data_summary = output_data_pivoted_2 %>%
+  group_by(class, drug, species, Susceptibility) %>%
+  summarise(`abs avg l2fc` = mean(abs(value), na.rm = T),
+            `number of samples` = n_distinct(sample)) %>%
+  mutate(text = round(`abs avg l2fc`, digits = 1)) 
+
+output_data_summary %>%
+  write.csv(paste0(dir2, "/ProbeResponseSummary_bySpeciesDrugSusceptility.csv"))
+
+output_data_pivoted_2 %>%
+  group_by(sample, class, drug, species, Susceptibility) %>%
+  summarise(`abs avg l2fc` = mean(abs(value), na.rm = T)) %>%
+  write.csv(paste0(dir2, "/ProbeResponseSummary_byDrugStrain.csv"))
+
+known_data = known_data %>%
+  mutate(Strain = ifelse(grepl(time, pattern = "rb", ignore.case = T),
+                         time,
+                         Strain),
+         species = substr(exp, 1, 2),
+         drug = str_to_title(drug),
+         class = ifelse(drug == "Gent",
+                        "Gent",
+                        ifelse(drug %in% c("Cip", "Levo"),
+                               "Fq",
+                               "Beta Lactam"))
+         )
+
+known_data_all = known_data_all %>%
+  mutate(Strain = ifelse(grepl(time, pattern = "rb", ignore.case = T),
+                         time,
+                         Strain),
+         species = substr(exp, 1, 2),
+         drug = str_to_title(drug),
+         class = ifelse(drug == "Gent",
+                        "Gent",
+                        ifelse(drug %in% c("Cip", "Levo"),
+                               "Fq",
+                               "Beta Lactam"))
+         )
+
+k_data <- known_data %>%
+  group_by(tag, S_I_R, drug, exp, species, class) %>%
+  dplyr::summarise(value = mean(value)) %>%
+  mutate(drug = factor((drug), levels = abx2)
+         #species = substr(exp, 1, 2)
+         #drug2 = substr(exp, 3, nchar(exp))
+         ) %>%
+  ungroup()
+```
+
+```{r, fig.height=42, fig.width=14}
+# ###L2FC Probe Response Distribution
+# 
+# The first plot's alpha is set by BLase content, the second plot's alpha is set by whether or not a probe was removed and removed probes are given a value of zero.
+
+# output_data_pivoted %>%
+#   mutate(tag = (gsub(tag, pattern = "^[^_]*_|_[^_]*$", replacement = ""))) %>%
+#   #mutate(tag = (gsub(tag, pattern = "_[0-9, _]*$", replacement = ""))) %>% 
+#   ggplot(aes(x = tag, y = value, color = Susceptibility, alpha = BLase, shape = BLase)) +
+#   #geom_boxplot() +
+#   geom_jitter(width = 0.3, height = 0) +
+#   scale_alpha_manual(values = c("none" = .35,
+#                               "CTXM15" = 1,
+#                               "KPC" = 1)) +
+#   scale_shape_manual(values = c("none" = 19,
+#                               "CTXM15" = 15,
+#                               "KPC" = 15)) +
+#   theme_classic() +
+#   theme(
+#     plot.title = element_text(hjust = 0.5),
+#     axis.text.x = element_text(angle = 90),
+#     panel.spacing=unit(0.25, "lines")
+#     ) +
+#     facet_nested_wrap(. ~ species + Drug, scales = "free", ncol = 2) #, independent = "y", space = "free_x")
+
+# output_data_pivoted %>%
+#   mutate(tag = (gsub(tag, pattern = "^[^_]*_|_[^_]*$", replacement = "")),
+#          probe_rmed = as.character(is.na(value)),
+#          value = ifelse(is.na(value), 0, value)) %>% 
+#   #mutate(tag = (gsub(tag, pattern = "_[0-9, _]*$", replacement = ""))) %>% 
+#   ggplot(aes(x = tag, y = value, color = Susceptibility, alpha = probe_rmed, shape = BLase)) +
+#   #geom_boxplot() +
+#   geom_jitter(width = 0.3, height = 0) +
+#   scale_alpha_manual(values = c("FALSE" = 1,
+#                               "TRUE" = .45)) +
+#   scale_shape_manual(values = c("none" = 19,
+#                               "CTXM15" = 15,
+#                               "KPC" = 17)) +
+#   theme_classic() +
+#   theme(
+#     plot.title = element_text(hjust = 0.5),
+#     axis.text.x = element_text(angle = 90),
+#     panel.spacing=unit(0.25, "lines")
+#     ) +
+#     facet_nested_wrap(. ~ species + Drug, scales = "free", ncol = 2) #, independent = "y", space = "free_x")
+
+## the height for this was 82 
+# norm_data_pivoted %>%
+#   mutate(tag = (gsub(tag, pattern = "^[^_]*_|_[^_]*$", replacement = "")),
+#          probe_rmed = as.character(is.na(value)),
+#          value = ifelse(is.na(value), 0, value),
+#          log10_val = log10(value)) %>%
+#   #mutate(tag = (gsub(tag, pattern = "_[0-9, _]*$", replacement = ""))) %>% 
+#   ggplot(aes(x = tag, y = log10_val, shape = probe_rmed, color = interaction(Susceptibility, treated))) +
+#   #geom_boxplot() +
+#   geom_jitter(width = 0.35, height = 0, alpha = 0.7) +
+#   theme_classic() +
+#   theme(
+#     plot.title = element_text(hjust = 0.5),
+#     axis.text.x = element_text(angle = 90),
+#     panel.spacing=unit(0.25, "lines")
+#     ) +
+#     facet_nested_wrap(. ~ species + Drug, scales = "free", ncol = 1) #, independent = "y", space = "free_x")
+```
+
+```{r, fig.width=18, fig.height=8}
+corr_data_pivoted %>%
+  mutate(tag = (gsub(tag, pattern = "^[^_]*_|_[^_]*$|APECO78_|_0.[0-9]{2}", replacement = ""))) %>%
+  filter(grepl(tag, pattern = "C_")) %>%
+  group_by(Drug, sample, Susceptibility, treated, species) %>%
+  summarise(`mean value of control gene transcripts` = (mean(value, na.rm = T))) %>% 
+  mutate(polymicrobial = ifelse(grepl(sample, pattern = "MGHBC17"), sample, "")) %>%
+  ungroup() %>%
+  #mutate(tag = (gsub(tag, pattern = "_[0-9, _]*$", replacement = ""))) %>%
+  ggplot(aes(x = Drug, y = `mean value of control gene transcripts`)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(data = . %>% filter(polymicrobial == ""), 
+              aes(color = interaction(Susceptibility, treated)), 
+              width = 0.35, height = 0, alpha = 0.7) +
+  geom_point(data = . %>% filter(polymicrobial != ""), 
+              aes(fill = interaction(Susceptibility, treated)), 
+              alpha = 1.0, shape = 24, size = 3, color = "black") +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 90),
+    panel.spacing=unit(0.25, "lines")
+    ) +
+    facet_nested_wrap(. ~ species, scales = "free", ncol = 2) #, independent = "y", space = "free_x")
+
+corr_data_pivoted %>%
+  mutate(tag = (gsub(tag, pattern = "^[^_]*_|_[^_]*$|APECO78_|_0.[0-9]{2}", replacement = ""))) %>%
+  filter(grepl(tag, pattern = "C_")) %>%
+  group_by(Drug, sample, Susceptibility, treated, species) %>%
+  summarise(`log10 mean value of control gene transcripts` = log10(mean(value, na.rm = T))) %>% 
+  mutate(polymicrobial = ifelse(grepl(sample, pattern = "MGHBC17"), sample, "")) %>%
+  ungroup() %>%
+  #mutate(tag = (gsub(tag, pattern = "_[0-9, _]*$", replacement = ""))) %>%
+  ggplot(aes(x = Drug, y = `log10 mean value of control gene transcripts`)) +
+  geom_boxplot(outlier.shape = NA) +
+  geom_jitter(data = . %>% filter(polymicrobial == ""), 
+              aes(color = interaction(Susceptibility, treated)), 
+              width = 0.35, height = 0, alpha = 0.7) +
+  geom_point(data = . %>% filter(polymicrobial != ""), 
+              aes(fill = interaction(Susceptibility, treated)), 
+              alpha = 1.0, shape = 24, size = 3, color = "black") +
+  theme_classic() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    axis.text.x = element_text(angle = 90),
+    panel.spacing=unit(0.25, "lines")
+    ) +
+    facet_nested_wrap(. ~ species, scales = "free", ncol = 2) #, independent = "y", space = "free_x")
+```
+
+```{r, fig.width=14, fig.height=6}
+# norm_data_pivoted %>%
+#   filter(species == "Kp" & grepl(tag, pattern = "dn") & !(Drug %in% c("cip", "levo", "gent"))) %>% #& grepl(tag, pattern = "dn")
+#   mutate(tag = (gsub(tag, pattern = "^[^_]*_|_[^_]*$", replacement = "")),
+#          probe_rmed = as.character(is.na(value)),
+#          value = ifelse(is.na(value), 0, value),
+#          log10_val = log10(value)) %>%
+#   #mutate(tag = (gsub(tag, pattern = "_[0-9, _]*$", replacement = ""))) %>%
+#   ggplot(aes(y = sample, x = log10_val, color = treated, shape = Susceptibility, alpha = probe_rmed)) +
+#   #geom_boxplot() +
+#   geom_point() +
+#   scale_alpha_manual(values = c("FALSE" = 1,
+#                               "TRUE" = .45)) +
+#   theme_bw() +
+#   theme(
+#     plot.title = element_text(hjust = 0.5),
+#     axis.text.x = element_text(angle = 90),
+#     panel.spacing=unit(0.25, "lines")
+#     ) +
+#     facet_nested_wrap(. ~ tag + Drug, scales = "free_x", ncol = 7) #, independent = "y", space = "free_x")
+```
+
+###Samples with known Suceptibility
+
+```{r known_strains2, echo = FALSE, fig.width=16, fig.height=7}
+known_data %>%
+  filter(species == "Kp" & use == "use") %>%
+  mutate(drug = factor((drug), levels = abx2)) %>%
+  ggplot(aes(x = Strain, y = tag , fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "navyblue",
+                       mid = "white",
+                       high = "red",
+                       midpoint = 0,
+                       na.value="grey75") +
+  theme_classic() +
+  #ggtitle(class) +
+  ggtitle("K. pneumoniae") + 
+  ylab("") +
+  xlab("") +
+  theme(
+      axis.text.y=element_blank(),  #remove y axis labels
+      axis.ticks.y=element_blank(),  #remove y axis ticks
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 90),
+      panel.spacing=unit(0.25, "lines")
+      ) +
+  #facet_nested(. ~ class + drug + S_I_R, scales = "free", space = "free")
+  facet_nested(. ~ class + drug + S_I_R + MIC, scales = "free", independent = "y", space = "free_x")
+
+known_data %>%
+  filter(species == "Ec" & use == "use") %>%
+  mutate(drug = factor((drug), levels = abx2)) %>%
+  ggplot(aes(x = Strain, y = tag , fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "navyblue",
+                       mid = "white",
+                       high = "red",
+                       midpoint = 0,
+                       na.value="grey75") +
+  theme_classic() +
+  #ggtitle(class) +
+  ggtitle("E. coli") +
+  ylab("") +
+  xlab("") +
+  theme(
+      axis.text.y=element_blank(),  #remove y axis labels
+      axis.ticks.y=element_blank(),  #remove y axis ticks
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 90),
+      panel.spacing=unit(0.25, "lines")
+      ) +
+  #facet_nested(. ~ class + drug + S_I_R, scales = "free", space = "free")
+  facet_nested(. ~ class + drug + S_I_R + MIC, scales = "free", independent = "y", space = "free_x")
+```
+
+```{r known_strains3, echo = FALSE, fig.width=24, fig.height=7}
+known_data_all %>%
+  filter(species == "Kp") %>%
+  mutate(drug = factor((drug), levels = abx2)) %>%
+  ggplot(aes(x = Strain, y = tag , fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "navyblue",
+                       mid = "white",
+                       high = "red",
+                       midpoint = 0,
+                       na.value="grey75") +
+  theme_classic() +
+  #ggtitle(class) +
+  ggtitle("K. pneumoniae") + 
+  ylab("") +
+  xlab("") +
+  theme(
+      axis.text.y=element_blank(),  #remove y axis labels
+      axis.ticks.y=element_blank(),  #remove y axis ticks
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 90),
+      panel.spacing=unit(0.25, "lines")
+      ) +
+  #facet_nested(. ~ class + drug + S_I_R, scales = "free", space = "free")
+  facet_nested(. ~ class + drug + S_I_R + MIC, scales = "free", independent = "y", space = "free_x")
+
+known_data_all %>%
+  filter(species == "Ec") %>%
+  mutate(drug = factor((drug), levels = abx2)) %>%
+  ggplot(aes(x = Strain, y = tag , fill = value)) +
+  geom_tile() +
+  scale_fill_gradient2(low = "navyblue",
+                       mid = "white",
+                       high = "red",
+                       midpoint = 0,
+                       na.value="grey75") +
+  theme_classic() +
+  #ggtitle(class) +
+  ggtitle("E. coli") +
+  ylab("") +
+  xlab("") +
+  theme(
+      axis.text.y=element_blank(),  #remove y axis labels
+      axis.ticks.y=element_blank(),  #remove y axis ticks
+      plot.title = element_text(hjust = 0.5),
+      axis.text.x = element_text(angle = 90),
+      panel.spacing=unit(0.25, "lines")
+      ) +
+  #facet_nested(. ~ class + drug + S_I_R, scales = "free", space = "free")
+  facet_nested(. ~ class + drug + S_I_R + MIC, scales = "free", independent = "y", space = "free_x")
+```
+
+```{r}
+output_data_pivoted_2 %>% 
+  select(species, drug, Susceptibility, sample) %>%
+  unique() %>%
+  count(species, drug, Susceptibility) %>%
+  pivot_wider(names_from = drug, values_from = n, values_fill = 0)
+
+clin_data %>% 
+  filter(Drug != "cz") %>%
+  group_by(species, Susceptibility, Drug) %>% 
+  summarise(
+    minimum = min(spd, na.rm = T), 
+    Q1 = quantile(spd, .25, na.rm = T), 
+    IQR = IQR(spd, na.rm = T),
+    median = median(spd, na.rm = T),
+    Q3 = quantile(spd, .75, na.rm = T), 
+    maximum = max(spd, na.rm = T)) %>% 
+  #pivot_wider(names_from = c("species", "Susceptibility"), values_from = c("minimum", "Q1", "IQR", "median", "Q3", "maximum")) %>%  
+  write.csv(paste0(dir2, "/SPDdistribution.csv"))
+
+clin_data %>%
+  filter(Drug != "cz") %>%
+  group_by(Susceptibility) %>% 
+  summarise(
+    minimum = min(spd, na.rm = T), 
+    Q1 = quantile(spd, .25, na.rm = T), 
+    IQR = IQR(spd, na.rm = T),
+    mean = mean(spd, na.rm = T),
+    median = median(spd, na.rm = T),
+    Q3 = quantile(spd, .75, na.rm = T), 
+    maximum = max(spd, na.rm = T))
+  
+```
+
+```{r, fig.width= 14, fig.height=5}
+output_data_pivoted_2 %>%
+  group_by(class, drug, species, Susceptibility) %>%
+  summarise(`abs avg l2fc` = mean(abs(value), na.rm = T),
+            num = n_distinct(sample)) %>%
+  mutate(text = 
+           paste0(
+             round(`abs avg l2fc`, digits = 1), 
+             " \n(n = ", num, ")"),
+         `dummy` = ".") %>%
+  ggplot(aes(y = Susceptibility, x = `dummy` , fill = `abs avg l2fc`)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "navyblue",
+                         mid = "white",
+                         high = "red",
+                         midpoint = 0,
+                         na.value="grey75") +
+    geom_text(aes(label = text), size = rel(4)) +
+    theme_classic() +
+    ylab("") +
+    xlab("") +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(angle = 90, vjust=0.19),
+        ) +
+    facet_nested(species ~ class + drug, scales = "free", independent = "x", space = "free_y") +
+    NULL
+```
+
+```{r, fig.width= 14, fig.height=7}
+## add geom_point, SIR color scheme, and alpha, green color scheme for SIR
+
+temp = output_data_summary %>%
+  filter(drug != "Cefazolin") %>%
+  mutate(SIR = factor(substr(Susceptibility, 1, 1), level = c("S", "I", "R"))) %>%
+  ggplot(aes(y = `number of samples`, x = SIR , fill = `abs avg l2fc`)) +
+    geom_col(color = "black") +
+    #geom_text(aes(label = `number of samples`), size = rel(4), nudge_y = 1) +
+    # scale_fill_gradient2(low = "navyblue",
+    #                      mid = "white",
+    #                      high = "red",
+    #                      midpoint = 0,
+    #                      na.value="grey75") +
+    scale_fill_viridis(option="inferno", begin = .15, end = 1, direction = -1) +
+    theme_bw() +
+    xlab("") +
+    expand_limits(y = c(0, 16)) +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(vjust=0.19), #angle = 90, 
+        ) +
+    facet_nested(species ~ class + drug, scales = "free_y", space = "free_y") +
+    NULL
+temp
+ggsave(filename = "AvgAbsProbeRspns.pdf", path = dir2, plot = temp, dpi = 320, width = 14, height = 7, units = "in")
+
+output_data_pivoted_2 %>%
+  #filter((sample != "MGHBC17kp") & (sample != "MGHBC17ec")) %>%
+  select(class, drug, species, Susceptibility, id) %>%
+  unique() %>% 
+  right_join(select(clin_data, samples, spd), by = c("id" = "samples")) %>%
+  #right_join(output_data_summary, by = c('class', 'drug', 'species', 'Susceptibility')) %>%
+  mutate(SIR = factor(substr(Susceptibility, 1, 1), level = c("S", "I", "R"))) %>%
+  filter(drug != "Cefazolin") %>%
+  ggplot(aes(x = SIR, y = spd)) + # fill = `abs avg l2fc`
+  geom_boxplot(fill = "white", outlier.shape = NA) +
+  geom_point(color = "white") +
+  geom_point(color = "black", alpha = 0.3) +
+  #geom_jitter(fill = "black", alpha = 0.3, width = 0.3, height = 0) +
+  theme_bw() +
+  #scale_fill_viridis(option="inferno", begin = .15, end = 1, direction = -1) +
+  theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(vjust=0.19),
+        ) +
+    facet_nested(species ~ class + drug, scales = "free_y", space = "free_y") + #independent = "x", space = "free_y"
+    NULL
+
+temp = output_data_pivoted_2 %>%
+  #filter((sample != "MGHBC17kp") & (sample != "MGHBC17ec")) %>%
+  select(class, drug, species, Susceptibility, id) %>%
+  unique() %>% 
+  right_join(select(clin_data, samples, spd), by = c("id" = "samples")) %>%
+  #right_join(output_data_summary, by = c('class', 'drug', 'species', 'Susceptibility')) %>%
+  mutate(SIR = factor(substr(Susceptibility, 1, 1), level = c("S", "I", "R"))) %>%
+  filter(drug != "Cefazolin") %>%
+  ggplot(aes(x = SIR, y = spd)) + # fill = `abs avg l2fc`
+  geom_boxplot(fill = "white", outlier.shape = NA) +
+  geom_jitter(fill = "black", alpha = 0.3, width = 0.3, height = 0) +
+  theme_bw() +
+  #scale_fill_viridis(option="inferno", begin = .15, end = 1, direction = -1) +
+  theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(vjust=0.19),
+        ) +
+    facet_nested(species ~ class + drug, scales = "free_y", space = "free_y") + #independent = "x", space = "free_y"
+    NULL
+temp
+ggsave(filename = "SPD_boxplot.pdf", path = dir2, plot = temp, dpi = 320, width = 14, height = 7, units = "in")
+
+
+output_data_pivoted_2 %>%
+  filter((sample == "MGHBC17kp") | (sample == "MGHBC17ec")) %>%
+  select(class, drug, species, Susceptibility, id) %>%
+  unique() %>% 
+  right_join(select(clin_data, samples, spd), by = c("id" = "samples")) %>%
+  mutate(SIR = factor(substr(Susceptibility, 1, 1), level = c("S", "I", "R"))) %>%
+  filter(drug != "Cefazolin") %>%
+  ggplot(aes(x = drug, y = spd, fill = Susceptibility)) + # fill = `abs avg l2fc`
+  geom_point(shape = 21, size = 4) +
+  theme_bw() +
+  scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+  theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(vjust=0.19),
+        axis.title.x = element_blank(),
+        axis.ticks.x = element_blank()
+        ) +
+    facet_nested(species ~ class + drug, scales = "free_x", space = "free_x") + #independent = "x", space = "free_y"
+    NULL
+
+# here
+```
+
+
+```{r heatmaps_by_antimicrobial, echo = FALSE} 
+graphDrug <- function(drug, plot = "classic"){ 
+  #plot options are classic, MIC, SPD 
+  #can also introduce a feature to order samples by absolute avg probe response or MIC or SIR
+  #can also introduce a feature to order drug classes together or by drug
+  
+  if(!(drug%in%abx)){
+    print("Please enter a drug in the following list")
+    print(abx)
+    return()
+  }
+  
+  # order by drug
+  clin_data_temp = clin_data %>%
+    filter(Drug == str_to_lower(drug)) #%>% filter(!grepl(sample, pattern = "17"))
+  
+  ordered_samples2 = clin_data_temp %>% 
+    arrange(Susceptibility, MIC, spd) %>%
+    pull(sample) %>%
+    unique()
+  
+  ordered_samples2_short = clin_data_temp %>% 
+    arrange(Susceptibility, MIC, spd) %>%
+    pull(sample) %>%
+    gsub(pattern = "MGHBC", replacement = "") %>%
+    unique()
+  
+  titles <- c("Ec", "Kp")
+  
+  a <- output_data_pivoted %>% 
+    filter(species == "Ec" & Drug == str_to_lower(drug)) %>%
+    mutate(text = round(value, digits = 1),
+           sample = factor(gsub(sample, pattern = "_.*", replacement = ""), levels = ordered_samples2),
+           sample_short = factor(gsub(sample, pattern = "MGHBC", replacement = ""), levels = ordered_samples2_short)) %>%
+    left_join(gene_names, by = "tag") # %>% filter(!grepl(sample, pattern = "17"))
+  
+  b <- output_data_pivoted %>% 
+    filter(species == "Kp" & Drug == str_to_lower(drug)) %>%
+    mutate(text = round(value, digits = 1),
+           sample = factor(gsub(sample, pattern = "_.*", replacement = ""), levels = ordered_samples2),
+           sample_short = factor(gsub(sample, pattern = "MGHBC", replacement = ""), levels = ordered_samples2_short)) %>%
+    left_join(gene_names, by = "tag") # %>% filter(!grepl(sample, pattern = "17"))
+  
+  data_BL_temp = data_BL %>%
+    #filter(!grepl(sample, pattern = "17")) %>%
+    mutate(sample = factor(gsub(sample, pattern = "_.*", replacement = ""), levels = ordered_samples2) )
+  
+  XtremeA <- max(abs(a$value), na.rm = TRUE)
+  XtremeB <- max(abs(b$value), na.rm = TRUE)
+  samples_a = unique(a$sample)
+  samples_b = unique(b$sample)
+  width_list = c(n_distinct(a$sample), n_distinct(b$sample))
+
+  A <- a %>%
+    ggplot(aes(x = sample_short, y = gene , fill = value)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "navyblue",
+                         mid = "white",
+                         high = "red",
+                         midpoint = 0,
+                         na.value="grey75",
+                         limits = c(-(XtremeA), XtremeA)) +
+    # geom_text(aes(label = text), size = rel(2)) +
+    # scale_color_manual(values = c(
+    #   "omitted" = "grey75",
+    #   "above" = "black",
+    #   "below" = "red3"
+    # )) +
+    theme_classic() +
+    ylab("") +
+    xlab("") +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(angle = 90, vjust=0.19),
+        ) +
+    NULL
+
+  A2 <- data_BL_temp %>%
+    filter(sample %in% unique(gsub(samples_a, pattern = "_.*", replacement = ""))) %>%
+    ggplot(aes(x = sample, y = BLase , fill = present)) +
+    geom_tile() +
+    scale_fill_gradient(low = "white", high = "black") +
+    theme_bw() +
+    ylab("") +
+    xlab("") +
+    theme(
+        axis.ticks.y=element_blank(),  #remove y axis ticks
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x=element_blank(),  #remove y axis labels
+        axis.ticks.x=element_blank(),  #remove y axis ticks
+        legend.position="none") +
+    NULL
+
+  B <- b %>%
+    ggplot(aes(x = sample_short, y = gene , fill = value)) +
+    geom_tile() +
+    scale_fill_gradient2(low = "navyblue",
+                         mid = "white",
+                         high = "red",
+                         midpoint = 0,
+                         na.value="grey75",
+                         limits = c(-(XtremeB), XtremeB)) +
+    # geom_text(aes(label = text), size = rel(2)) +
+    # scale_color_manual(values = c(
+    #   "omitted" = "grey75",
+    #   "above" = "black",
+    #   "below" = "red3"
+    # )) +
+    theme_classic() +
+    ylab("") +
+    xlab("") +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(angle = 90, vjust=0.19),
+        ) +
+    NULL
+
+  B2 <- data_BL_temp %>%
+    filter(sample %in% unique(gsub(samples_b, pattern = "_.*", replacement = ""))) %>%
+    ggplot(aes(x = sample, y = BLase , fill = present)) +
+    geom_tile() +
+    scale_fill_gradient(low = "white", high = "black") +
+    theme_bw() +
+    ylab("") +
+    xlab("") +
+    theme(
+        axis.ticks.y=element_blank(),  #remove y axis ticks
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x=element_blank(),  #remove y axis labels
+        axis.ticks.x=element_blank(),  #remove y axis ticks
+        legend.position="none"
+        ) +
+    NULL
+  
+  
+  if(plot == "classic"){    
+    C <- ggarrange(
+      A2 + ggtitle(titles[1]), B2 + ggtitle(titles[2]), A, B,
+      nrow = 2, ncol = 2, widths = width_list, heights = c(1, 7)
+      )
+    return(C)
+    }
+      
+  if(plot == "MIC"){
+    A3 <- clin_data_temp %>% 
+      filter(substr(s, 1, 1) == substr(titles[1], 1, 1)) %>%
+      mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples2)) %>%
+      ggplot(aes(samples, Drug)) +
+      geom_tile(fill = "white") +
+      geom_text(aes(label = MIC, color = Susceptibility), size = 2.75) +
+      theme_linedraw() +
+      ylab("MIC") +
+      ggtitle(titles[1]) +
+      scale_color_manual(values = c("Susceptible"="#0571b0", "Intermediate"="#844884", "Resistant"="#ca0020")) +
+      theme(
+          plot.title = element_text(hjust = 0.5),
+          plot.margin = margin(b = 0, unit = "pt"),
+          axis.title.y = element_text(angle=0, vjust = 0.5),
+          axis.text.x=element_blank(),  #remove y axis labels
+          axis.ticks.x=element_blank(),  #remove y axis ticks
+          axis.ticks.y=element_blank(),  #remove y axis ticks
+          axis.title.x = element_blank(),
+          axis.text.y = element_blank(),
+          legend.position="none") +
+      NULL
+
+    B3 <- clin_data_temp %>% 
+      filter(substr(s, 1, 1) == substr(titles[2], 1, 1)) %>%
+      mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples2)) %>%
+      #pull(Susceptibility)
+      ggplot(aes(samples, Drug)) +
+      geom_tile(fill = "white") +
+      geom_text(aes(label = MIC, color = Susceptibility), size = 2.75) +
+      theme_linedraw() +
+      ylab("MIC") +
+      ggtitle(titles[2]) +
+      #c("Resistant", "Intermediate",  "Susceptible")
+      #scale_color_manual(values = c("Susceptible"="#88115c", "Intermediate"="#844884", "Resistant"="#ca0020")) + # #0571b0
+      scale_color_manual(values = c("Susceptible"="#0571b0", "Intermediate"="#844884", "Resistant"="#ca0020")) +
+      theme(
+          plot.title = element_text(hjust = 0.5),
+          plot.margin = margin(b = 0, unit = "pt"),
+          axis.title.y = element_text(angle=0, vjust = 0.5),
+          axis.title.x = element_blank(),
+          axis.ticks.x = element_blank(),  #remove y axis ticks
+          axis.ticks.y = element_blank(),  #remove y axis ticks
+          axis.text.y = element_blank(),
+          axis.text.x = element_blank(),  #remove y axis labels
+          legend.position="none") +
+      NULL
+  
+    D <- ggarrange(
+      A3, B3, A2 ,B2, A, B,
+      nrow = 3, ncol = 2, widths = width_list, heights = c(1, 1, 7)
+      )
+    return(D)
+  }
+  
+  if(grepl(plot, pattern = "SPD")){
+    A4 = clin_data_temp %>%  
+      filter(substr(s, 1, 1) == substr(titles[1], 1, 1)) %>%
+      mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples2)) %>%
+      ggplot(aes(samples, spd, fill = Susceptibility), color = "black") + 
+        geom_point(size = 4, pch=21) +
+        theme_linedraw() +
+        expand_limits(y = c(0, 1)) +
+        #scale_color_manual(values = c("Susceptible"="black", "Intermediate"="dodgerblue3", "Resistant"="#ca0020")) +
+        scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+        theme(
+              plot.title = element_text(hjust = 0.5),
+              plot.margin = margin(b = 0, t = 0, unit = "pt"),
+              #axis.title.y = element_text(angle=0, vjust = 0.5, size = 15),
+              axis.ticks.x = element_blank(),
+              axis.text.y = element_text(size = 11),
+              axis.text.x=element_blank(),
+              axis.title.y = element_blank(),
+              axis.title.x = element_blank(),
+              legend.position="none",
+              panel.grid.major = element_blank(), 
+              panel.grid.minor = element_blank()) +
+        NULL
+    
+    B4 = clin_data_temp %>%  
+      filter(substr(s, 1, 1) == substr(titles[2], 1, 1)) %>%
+      mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples2)) %>%
+      ggplot(aes(samples, spd, fill = Susceptibility), color = "black") + 
+        geom_point(size = 4, pch=21) +
+        theme_linedraw() +
+        expand_limits(y = c(0, 1)) +
+        #scale_color_manual(values = c("Susceptible"="black", "Intermediate"="dodgerblue3", "Resistant"="#ca0020")) +
+        scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+        theme(
+              plot.title = element_text(hjust = 0.5),
+              plot.margin = margin(b = 0, t = 0, unit = "pt"),
+              #axis.title.y = element_text(angle=0, vjust = 0.5, size = 15),
+              axis.ticks.x = element_blank(),
+              axis.text.y = element_text(size = 11),
+              axis.text.x=element_blank(),
+              axis.title.y = element_blank(),
+              axis.title.x = element_blank(),
+              legend.position="none",
+              panel.grid.major = element_blank(), 
+              panel.grid.minor = element_blank()) +
+        NULL
+    if(grepl(plot, pattern = "wSus")){
+      
+      A5 <- clin_data_temp %>% 
+        filter(substr(s, 1, 1) == substr(titles[1], 1, 1)) %>%
+        mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples2)) %>%
+        ggplot(aes(samples, Drug)) +
+        geom_tile(aes(fill = Susceptibility)) +
+        geom_text(aes(label = MIC, color = Susceptibility), size = 5, angle = 90) +
+        theme_void() +
+        scale_color_manual(values = c("Resistant"="white", "Intermediate"="black", "Susceptible"="black")) +
+        scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+        theme(
+            plot.title = element_text(hjust = 0.5),
+            plot.margin = margin(b = 0, t = 0, unit = "pt"),
+            legend.position="none",
+            axis.ticks.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.text.x=element_blank(),
+            axis.title.y = element_blank(),
+            axis.title.x = element_blank(),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank()
+              ) +
+        NULL
+  
+      B5 <- clin_data_temp %>% 
+        filter(substr(s, 1, 1) == substr(titles[2], 1, 1)) %>%
+        mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples2)) %>%
+        ggplot(aes(samples, Drug)) +
+        geom_tile(aes(fill = Susceptibility)) +
+        geom_text(aes(label = MIC, color = Susceptibility), size = 5, angle = 90) +
+        theme_void() +
+        scale_color_manual(values = c("Resistant"="white", "Intermediate"="black", "Susceptible"="black")) +
+        scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+        theme(
+            plot.title = element_text(hjust = 0.5),
+            plot.margin = margin(b = 0, t = 0, unit = "pt"),
+            legend.position="none",
+            axis.ticks.x = element_blank(),
+            axis.text.y = element_blank(),
+            axis.text.x=element_blank(),
+            axis.title.y = element_blank(),
+            axis.title.x = element_blank(),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank()
+              ) +
+        NULL
+      E <- ggarrange(
+        A2 ,B2, A, B, A4, B4, A5, B5,
+        nrow = 4, ncol = 2, widths = width_list, heights = c(1, 5, 3, 1)
+        )
+      e1 <- ggarrange(
+        A2, A, A4, A5,
+        nrow = 4, ncol = 2, heights = c(1, 5, 3, 1)
+      )
+      e2 <- ggarrange(
+        B2, B, B4, B5,
+        nrow = 4, ncol = 2, heights = c(1, 5, 3, 1)
+      )
+      ggsave(filename = paste0(i, "_ec_Heamap_SPD.png"), 
+             path = dir2, plot = e1, dpi = 320, width = (14 * width_list[1]/(width_list[1] + width_list[2])), height = 7, units = "in")
+      ggsave(filename = paste0(i, "_kp_Heamap_SPD.png"), 
+             path = dir2, plot = e2, dpi = 320, width = (14 * width_list[2]/(width_list[1] + width_list[2])), height = 7, units = "in")
+    }else{
+      E <- ggarrange(
+        A2 ,B2, A, B, A4, B4, 
+        nrow = 3, ncol = 2, widths = width_list, heights = c(1, 5, 3)
+        )
+    }
+    return(E)
+  }
+  if(plot == "avg"){
+    
+    ordered_samples3 = output_data_pivoted %>% 
+      #filter(!grepl(sample, pattern = "17")) %>%
+      filter(Drug == str_to_lower(drug)) %>%
+      group_by(sample, Susceptibility, MIC) %>%
+      summarise(r = mean(abs(value), na.rm = T)) %>%
+      arrange(Susceptibility, MIC, desc(r)) %>%
+      pull(sample)
+      
+    
+      A5 <- clin_data_temp %>% 
+        filter(substr(s, 1, 1) == substr(titles[1], 1, 1)) %>%
+        mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples3)) %>%
+        ggplot(aes(samples, Drug)) +
+        geom_tile(aes(fill = Susceptibility)) +
+        geom_text(aes(label = MIC), color = "red3", size = 5, angle = 90) +
+        #geom_text(aes(label = Susceptibility2), size = 4, color = "white") +
+        theme_void() +
+        #ylab("Susceptibility") +
+        # ggtitle(titles[1]) +
+        #scale_fill_manual(values = c("Susceptible"="black", "Intermediate"="dodgerblue4", "Resistant"="#ca0020")) +
+        scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+        theme(
+            plot.title = element_text(hjust = 0.5),
+            plot.margin = margin(b = 0, t = 0, unit = "pt"),
+            legend.position="none",
+            axis.ticks.x = element_blank(),
+            axis.text.x=element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank()
+              ) +
+        NULL
+  
+      B5 <- clin_data_temp %>% 
+        filter(substr(s, 1, 1) == substr(titles[2], 1, 1)) %>%
+        mutate(samples = factor(gsub(samples, pattern = "_.*", replacement = ""), levels = ordered_samples3)) %>%
+        ggplot(aes(samples, Drug)) +
+        geom_tile(aes(fill = Susceptibility)) +
+        geom_text(aes(label = MIC), color = "red3", size = 5, angle = 90) +
+        #geom_text(aes(label = Susceptibility2), size = 4, color = "white") +
+        theme_void() +
+        #ylab("Susceptibility") +
+        # ggtitle(titles[1]) +
+        #scale_fill_manual(values = c("Susceptible"="black", "Intermediate"="dodgerblue4", "Resistant"="#ca0020")) +
+        scale_fill_manual(values = c("Resistant"="black", "Intermediate"="grey46", "Susceptible"="grey92")) +
+        theme(
+            plot.title = element_text(hjust = 0.5),
+            plot.margin = margin(b = 0, t = 0, unit = "pt"),
+            legend.position="none",
+            axis.ticks.x = element_blank(),
+            axis.text.x=element_blank(),
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank()
+              ) +
+        NULL
+      
+      A6 <- a %>%
+        group_by(sample) %>%
+        mutate(temp = ".",
+               `Avg Abs Value` = mean(abs(value), na.rm = T),
+               text = round(`Avg Abs Value`, digits = 1),
+               sample = factor(sample, levels = ordered_samples3)) %>%
+        ggplot(aes(x = sample, y = temp , fill = `Avg Abs Value`)) +
+        geom_tile() +
+        scale_fill_gradient2(low = "navyblue",
+                             mid = "white",
+                             high = "red",
+                             midpoint = 0,
+                             na.value="grey75") +
+        geom_text(aes(label = text), size = rel(2)) +
+        theme_classic() +
+        ylab("") +
+        xlab("") +
+        theme(
+            plot.title = element_text(hjust = 0.5),
+            plot.margin = margin(t = 0, b = 0, unit = "pt"),
+            axis.text.x = element_text(angle = 90, vjust=0.19),
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank()
+            ) +
+        NULL
+  
+      B6 <- b %>%
+        group_by(sample) %>%
+        mutate(temp = ".",
+               `Avg Abs Value` = mean(abs(value), na.rm = T),
+               text = round(`Avg Abs Value`, digits = 1),
+               sample = factor(sample, levels = ordered_samples3)) %>%
+        ggplot(aes(x = sample, y = temp , fill = `Avg Abs Value`)) +
+        geom_tile() +
+        scale_fill_gradient2(low = "navyblue",
+                             mid = "white",
+                             high = "red",
+                             midpoint = 0,
+                             na.value="grey75") +
+        geom_text(aes(label = text), size = rel(2)) +
+        theme_classic() +
+        ylab("") +
+        xlab("") +
+        theme(
+            plot.title = element_text(hjust = 0.5),
+            plot.margin = margin(t = 0, b = 0, unit = "pt"),
+            axis.text.x = element_text(angle = 90, vjust=0.19),
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank()
+            ) +
+        NULL
+      G <- ggarrange(
+        A6, B6, A5, B5, 
+        nrow = 2, ncol = 2, widths = width_list
+        )
+
+  }
+}
+
+```
+
+```{r, fig.width=14, fig.height=3}
+for (i in abx){
+  print(paste('Avg Abs Logfold Change of Gene Expression After', i , 'Treatment'))
+  x = graphDrug(i, plot = "avg")
+  ggsave(filename = paste0(i, "_AvgAbsResp.png"), path = dir2, plot = x, dpi = 320, width = 14, height = 3, units = "in")
+}
+```
+
+
+```{r, fig.width=14}
+for (i in abx){
+  print(paste('Logfold Change of Gene Expression After', i , 'Treatment'))
+  x = graphDrug(i)
+  ggsave(filename = paste0(i, "_Heamap.png"), path = dir2, plot = x, dpi = 320, width = 14, height = 7, units = "in")
+}
+
+graphDrug(i)
+```
+
+```{r, fig.width=14}
+for (i in abx){
+  print(paste('Logfold Change of Gene Expression After', i , 'Treatment'))
+  x = graphDrug(i, plot = "MIC")
+  ggsave(filename = paste0(i, "_Heamap_MIC.png"), path = dir2, plot = x, dpi = 320, width = 14, height = 7, units = "in")
+}
+```
+
+
+```{r, fig.width=14}
+for (i in abx){
+  print(paste('Logfold Change of Gene Expression After', i , 'Treatment'))
+  x = graphDrug(i, plot = "SPDwSusceptibility")
+  ggsave(filename = paste0(i, "_Heamap_SPD_noPoly.pdf"), path = dir2, plot = x, dpi = 320, width = 14, height = 7, units = "in")
+}
+```
+
+```{r}
+#from: https://rpubs.com/uky994/593668
+
+calculate_performance = function(df){
+  temp_df = df %>% 
+    summarise(
+      n = n(),
+      Pos = sum(S_I_R == "R"),
+      Neg = sum(S_I_R == "S"),
+      Int = n - Pos - Neg,
+      ## these calculations ignore I
+      TruePos = sum((S_I_R == "R" & pred_S_R == "R")), # for true positive (positive for resistance)
+      FalsePos = sum((S_I_R == "S" & pred_S_R == "R")), # major errors 
+      FalseNeg = sum((S_I_R == "R" & pred_S_R == "S")), # very major errors
+      TrueNeg = sum((S_I_R == "S" & pred_S_R == "S")),
+      TPR = (TruePos / (TruePos + FalseNeg)),  # true positive / (true positive + false negative # Sensitivity
+      FPR = (FalsePos / (FalsePos + TrueNeg)), # false positive / (false positive + true negative) # 1 - Specificity
+      TNR = (TrueNeg / (TrueNeg + FalseNeg)),
+      Percision = TruePos / (TruePos + FalsePos),
+      True_Call = TruePos + TrueNeg,
+      True_Call_rate = True_Call/(Pos + Neg),
+      Major_Error_rate = FalsePos / Neg,
+      Very_Major_Error_rate = FalseNeg / Pos,
+      ## these calculations include I
+      TruePos_ns = sum((S_I_R != "S" & pred_S_R != "S")),
+      FalsePos_ns = sum((S_I_R == "S" & pred_S_R != "S")),
+      FalseNeg_ns = sum((S_I_R != "S" & pred_S_R == "S")),
+      TPR_ns = (TruePos_ns / (TruePos_ns + FalseNeg_ns)),
+      FPR_ns = (FalsePos_ns / (FalsePos_ns + TrueNeg)),
+      Categorical_Agreement = TrueNeg + TruePos_ns,
+      Categorical_Agreement_rate = Categorical_Agreement / n,
+      I_called_R = sum((S_I_R == "I" & pred_S_R == "R")),
+      I_called_S = sum((S_I_R == "I" & pred_S_R == "S")),
+      IRR = I_called_R / Int, # like true pos?
+      ISR = I_called_S / Int, # like true neg?
+      Minor_Error_rate = I_called_S / n) %>%
+    ungroup()
+  return(temp_df)
+}
+```
+
+```{r SVM_SPD, fig.width=14}
+SVMdata_onSPD = as.data.frame(matrix(nrow = 0, ncol = 13))
+colnames(SVMdata_onSPD) = 
+  c("sample", "S_I_R", "spd", "species", "drug", "class", 
+    "w", "b", "pred_S_R", "SV", "(w*spd)-b", "boundry", "set")
+
+mel_data = known_data %>%
+  select(species, drug, spd, S_I_R, Strain) %>%
+  distinct() %>%
+  mutate(sample = Strain,
+         class = ifelse(drug %in% c("gent","Gent"),"Gent",
+                        ifelse(drug %in% c("cip", "levo", "Cip", "Levo"), "Fq", "Beta Lactam"))) %>%
+  select(sample, S_I_R, spd, species, class, drug)
+
+data = clin_data %>%
+  mutate(drug = Drug,
+         class = ifelse(drug %in% c("gent","Gent"),"Gent",
+                        ifelse(drug %in% c("cip", "levo", "Cip", "Levo"), "Fq", "Beta Lactam")),
+                            S_I_R = substr(Susceptibility, 1, 1),
+                            drug = Drug) %>%
+  select(sample, S_I_R, spd, species, class, drug)
+
+for (j in unique(data$species)){
+  for (k in c("Gent", "Fq", "Beta Lactam")){
+    #calculate D: https://stats.stackexchange.com/questions/26293/how-to-obtain-decision-boundaries-from-linear-svm-in-r
+    #plot boundry: https://rpubs.com/cliex159/865583
+    #find boundry: https://stats.stackexchange.com/questions/440640/what-are-w-and-b-parameters-in-svm
+
+    dat = data %>% filter((S_I_R %in% c("S", "R")) & (species == j) & (class == k) & !(drug %in% c("cz", "Cefaz"))) %>%
+      select(S_I_R, spd, sample, class, drug, species) %>%
+      mutate(S_I_R = factor(S_I_R),
+             mel_data = 0,
+             set = "train")
+    dat = mel_data %>% filter((S_I_R %in% c("S", "R")) & (species == j) & (class == k) & !(drug %in% c("cz", "Cefaz"))) %>% 
+      mutate(S_I_R = factor(S_I_R),
+             mel_data = 1,
+             spd = as.numeric(spd),
+             set = "train") %>%
+      rbind(dat) %>%
+      as_tibble()
+    set.seed(2)
+    svmfit = svm(S_I_R ~ spd, 
+                 data = dat, 
+                 kernel = "linear",  
+                 class.weights= c("S" = 1, "R" = 2), 
+                 scale = FALSE,
+                 cost = 2)
+    svmfit.pred <- predict(svmfit, dat[, c("spd")])
+    w_temp = (t(svmfit$SV) %*% svmfit$coefs)[[1]]
+    b_temp = (svmfit$rho)
+    SV_temp = svmfit$SV %>% as.list() %>% unlist()
+    
+    dat_i = data %>% 
+      filter(((S_I_R == "I") & (species == j) & (class == k)) | ((species == j) & (class == k) & (drug %in% c("cz", "Cefaz")))) %>% # %>% filter((species == j) & (class == k)) %>% 
+      select(S_I_R, spd, sample, class, drug, species) %>% 
+      mutate(S_I_R = factor(S_I_R),
+             mel_data = 0,
+             set = "test")
+    dat_i = mel_data %>% 
+      filter(((S_I_R == "I") & (species == j) & (class == k)) | ((species == j) & (class == k) & (drug %in% c("cz", "Cefaz")))) %>%
+      mutate(S_I_R = factor(S_I_R),
+             mel_data = 1,
+             set = "test") %>% 
+      rbind(dat_i) %>%
+      as_tibble()
+    
+    if(dim(dat_i)[1] != 0){
+      svmfit.pred.forI <- predict(svmfit, dat_i[, c("spd")])
+      dat = rbind(dat, dat_i) %>% mutate(
+        species = j,
+        w = w_temp,
+        b = b_temp,
+        pred_S_R = c(svmfit.pred, svmfit.pred.forI),
+        SV = spd %in% SV_temp,
+        `(w*spd)-b` = (w*spd)-b,
+        boundry = b/w
+        )
+      SVMdata_onSPD = rbind(SVMdata_onSPD, dat)
+    }else{
+      dat = dat %>% mutate(
+        species = j,
+        w = w_temp,
+        b = b_temp,
+        pred_S_R = svmfit.pred,
+        SV = spd %in% SV_temp,
+        `(w*spd)-b` = (w*spd)-b,
+        boundry = b/w
+        )
+      SVMdata_onSPD = rbind(SVMdata_onSPD, dat)
+    }
+  }
+}
+
+ table(SVMdata_onSPD$S_I_R, SVMdata_onSPD$pred_S_R)
+ 
+ SVMdata_onSPD %>% select(species, class, boundry) %>% unique()
+ 
+ SVMdata_onSPD %>% 
+   filter(SV) %>%
+   group_by(species, class, pred_S_R) %>% 
+   mutate(max = ifelse(spd == max(spd), T, F),
+          min = ifelse(spd == min(spd), T, F)) %>% 
+   ungroup() %>%
+   filter((pred_S_R == "S" & max)|(pred_S_R == "R" & min)) %>%
+   select(spd, class, species, boundry, w, b) %>% 
+   unique() %>%
+   group_by(species, class) %>% 
+   mutate(min.or.max.SV = ifelse(spd == max(spd), "upper.SV", "lower.SV")) %>%
+   ungroup() %>% 
+   pivot_wider(values_from = spd, names_from = min.or.max.SV) %>%
+   mutate(lower.SV = ceiling(lower.SV*100)/100,
+          upper.SV = ceiling(upper.SV*100)/100,
+          lower.margin = boundry - 1/w,
+          upper.margin = boundry + 1/w)
+ 
+ SVMdata_onSPD = SVMdata_onSPD %>% 
+   mutate(Species = ifelse(species == "Ec", "E. coli", "K. pneumoniae"),
+          S_I_R = factor(as.character(S_I_R), levels = c("S", "I", "R")),
+          SV = ifelse(SV, "SV", "not SV"),
+          pred_S_R = as.character(pred_S_R),
+          correct_call = ((S_I_R == "S" & pred_S_R == "S") | (S_I_R != "S" & pred_S_R != "S")),
+          #account for KPC prediction of resistance
+          #pred_S_R = ifelse((sample == "MGHBC48" & drug %in% c("etp", "mem")), "R", pred_S_R),
+          `Predicted by` = ifelse((sample == "MGHBC48" & drug %in% c("etp", "mem")), "KPC content only", "SPD and genotype"),
+          result = 
+            ifelse(S_I_R == pred_S_R,
+                   # if the call was correct
+                   ifelse(S_I_R == "S", "True -", "True +"),
+                   # if the call was incorrect
+                   ifelse(S_I_R == "I",
+                          # if the strain was intermediate
+                          ifelse(pred_S_R == "S", "called S", "called R"),
+                          # if the strain was resistant
+                          ifelse(S_I_R == "R", "False -", "False +"))),
+          `Susceptibility and Prediction` = 
+           factor(paste(sep = ", ", S_I_R, result),
+                  levels = c( "I, called S", "I, called R", "R, False -", "S, False +", "S, True -", "R, True +")),
+          drug = recode(drug,
+         "Cefaz" = "Cefazolin",              
+         "cz" = "Cefazolin",
+         "Ctx"= "Ceftriaxone",
+         "cro"= "Ceftriaxone",
+         "Aztr" = "Aztreonam",
+         "atm" = "Aztreonam", 
+         "fep" = "Cefepime",
+         "Erta" = "Ertapenem",
+         "etp" = "Ertapenem", 
+         "Mero" = "Meropenem",
+         "mem" = "Meropenem",
+         "Pip" = "Piperacillin Tazobactam",
+         "tzp" = "Piperacillin Tazobactam",
+         "Cip" = "Ciprofloxacin",
+         "cip" = "Ciprofloxacin",
+         "Gent" = "Gentamicin",
+         "gent" = "Gentamicin",
+         "Levo" = "Levofloxacin",
+         "levo" = "Levofloxacin"),
+         class = factor(recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside"),
+                        levels = c("Beta Lactam", "Fluoroquinolone", "Aminoglycoside")),
+         drug = factor(drug, levels = c("Gentamicin", "Ciprofloxacin", "Levofloxacin", "Cefazolin", "Ceftriaxone", "Aztreonam", "Piperacillin Tazobactam", "Cefepime", "Ertapenem", "Meropenem")),
+         data = ifelse(mel_data == 1, "Melanie", "Clinical"))
+ 
+ # SVMdata_onSPD %>%
+ #   ggplot(aes(x = drug, y = spd, color = result, size =  as.character(SV), shape = as.character(data))) +
+ #   geom_jitter(alpha = 0.7, width = 0.3, height = 0) +
+ #   scale_size_manual(values = c("TRUE" = 3.25,
+ #                              "FALSE" = 2.50)) +
+ #   theme_classic() +
+ #   scale_colour_brewer(palette = "Paired") +
+ #   facet_grid(rows = vars(Species), cols = vars(class), scales = "free_x", space = "free_x")
+ 
+ # SVMdata_onSPD %>%
+ #   filter(mel_data == 0) %>%
+ #   ggplot(aes(x = drug, y = spd, color = `Susceptibility and Prediction`, shape = `Predicted by`)) + #, shape = SV
+ #   geom_jitter(alpha = 0.7, width = 0.3, height = 0, size = 2.5) +
+ #   theme_classic() +
+ #   scale_colour_brewer(palette = "Paired") +
+ #   scale_shape_manual(values = c("SPD" = 19,
+ #                              "KPC content" = 17)) +
+ #   facet_grid(rows = vars(Species), cols = vars(class), scales = "free_x", space = "free_x")
+ 
+ y3 = SVMdata_onSPD %>%
+   ggplot(aes(x = S_I_R, y = spd, shape = SV, color = set)) +
+   geom_jitter(alpha = 0.7, width = 0.2, height = 0) +
+   theme_bw() +
+   facet_nested(species ~ class + drug, scales = "free", space = "free")
+ 
+ y3
+ 
+ y2 = SVMdata_onSPD %>%
+   ggplot(aes(x = S_I_R, y = spd, shape = SV, color = data)) +
+   geom_jitter(alpha = 0.7, width = 0.2, height = 0) +
+   theme_bw() +
+   facet_nested(species ~ class + drug, scales = "free", space = "free")
+ 
+ y2
+ 
+ y = SVMdata_onSPD %>%
+   left_join((output_data_pivoted %>% select(sample, BLase) %>% unique()), by = "sample") %>%
+   filter(mel_data == 0) %>%
+   filter(drug != "Cefazolin") %>%
+   mutate(call = ifelse(`Predicted by` == "KPC content only", 
+                        "Correct, Predicted by KPC",
+                        ifelse(correct_call, "Correct", "Incorrect")),
+          outline = ifelse(BLase != "none", "Beta-lactamase Present", `call`)) %>%
+   ggplot(aes(x = S_I_R, y = spd, color = outline, fill = call, shape = BLase)) + #, shape = SV
+   geom_jitter(
+     data = . %>% filter(call != "Correct, Predicted by KPC"),
+     alpha = 0.7, 
+     width = 0.3, 
+     height = 0, 
+     size = 2.5) + #alpha = 0.7, 
+   geom_point(
+     data = . %>% filter(call == "Correct, Predicted by KPC"), 
+     color="black",
+     size = 2.75) +
+   theme_bw() +
+   scale_color_manual(values = c("Correct" = "#0072B2", "Beta-lactamase Present" = "black", "Incorrect" = "#D55E00")) +
+   scale_shape_manual(values = c("none" = 21, "KPC" = 24, "CTXM15" = 22)) +
+   scale_fill_manual(values = c("Correct" = "#0072B2", "Correct, Predicted by KPC" = "black", "Incorrect" = "#D55E00")) +
+   facet_nested(species ~ class + drug, scales = "free_y", space = "free")
+ 
+ y
+ 
+ 
+```
+
+```{r}
+ ggsave(filename = "SVM_results_withMEL.pdf", path = dir2, plot = y2, dpi = 320, width = 14, height = 7, units = "in")
+ 
+ ggsave(filename = "SVM_results.pdf", path = dir2, plot = y, dpi = 320, width = 14, height = 7, units = "in")
+```
+
+```{r}
+
+#factor in KPC prediction
+SVMdata_onSPD = SVMdata_onSPD %>% 
+  mutate(
+         pred_S_R = ifelse((sample == "MGHBC48" & drug %in% c("etp", "mem", "Ertapenem", "Meropenem")), "R", pred_S_R),
+         result = ifelse((sample == "MGHBC48" & drug %in% c("etp", "mem", "Ertapenem", "Meropenem")), "True +", result),
+         `Susceptibility and Prediction` = ifelse((sample == "MGHBC48" & drug %in% c("etp", "mem", "Ertapenem", "Meropenem")), "R, True +", `Susceptibility and Prediction`)
+         )
+
+ SVMdata_onSPD %>% 
+   filter(mel_data == 0) %>%
+   mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+   group_by(Species, class, result) %>%
+   summarise(n = n()) %>%
+   pivot_wider(names_from = result, values_from = n, values_fill = 0)
+ 
+  results_1 = SVMdata_onSPD %>% 
+    filter(mel_data == 0) %>%
+    mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+    group_by(Species, class) %>%
+    calculate_performance() %>% #%>% write.csv(paste0(dir2, "/results_byClass.csv"))
+    mutate(group = "Species + Class",
+           CZ = "included")
+    
+  results_2 = SVMdata_onSPD %>% 
+    filter(mel_data == 0) %>%
+    mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+    calculate_performance() %>% #%>% write.csv(paste0(dir2, "/results_All.csv"))
+    mutate(group = "Grouped",
+           Species = "all",
+           class = "all",
+           CZ = "included")
+    
+  results_3 = SVMdata_onSPD %>%
+    filter(mel_data == 0) %>%
+    filter(!(drug == "cz" | drug == "Cefazolin")) %>%
+    mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+    group_by(Species, class) %>%
+    calculate_performance() %>% #%>% write.csv(paste0(dir2, "/results_noEcCz_byClass.csv"))
+    mutate(group = "Species + Class",
+           CZ = "removed")
+  
+  results_4 = SVMdata_onSPD %>%
+    filter(mel_data == 0) %>%
+    filter(!(drug == "cz" | drug == "Cefazolin")) %>%
+    mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+    calculate_performance() %>% #%>% write.csv(paste0(dir2, "/results_noEcCz_All.csv"))
+    mutate(group = "Grouped",
+           Species = "all",
+           class = "all",
+           CZ = "removed")
+  
+  results = rbind(rbind(results_1, results_2), rbind(results_3, results_4))
+  
+  results %>% write.csv(paste0(dir2, "/results_combined.csv"))
+  
+  SVM_boundry = SVMdata_onSPD %>%
+    select(boundry, species, class) %>%
+    unique()
+```
+
+```{r}
+m = output_data_pivoted_2 %>%
+  filter(sample == "MGHBC48" & class == "Beta Lactam") %>%
+  mutate(Drug = factor(Drug, levels = c("cz", "cro", "atm", "tzp", "fep", "etp", "mem")),
+         text = round(value, digits = 1)) %>%
+  ggplot(aes(x = Drug, y = gene , fill = value)) +
+    geom_tile() +
+    geom_text(aes(label = text)) +
+    scale_fill_gradient2(low = "navyblue",
+                         mid = "white",
+                         high = "red",
+                         midpoint = 0,
+                         na.value="grey75") +
+    scale_color_manual(values = c(
+      "omitted" = "grey75",
+      "above" = "black",
+      "below" = "red3"
+    )) +
+    theme_classic() +
+  ggtitle("Phenotype") +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(angle = 90, vjust=0.19),
+        ) +
+    NULL
+
+n = data_CRE %>%
+  filter(sample == "MGHBC48") %>%
+  mutate(BLase = gsub(tag, pattern = "CRE2_|_0.95|sum", replacement = ""),
+         value = ifelse(value > 1, "yes", "no"),
+         dummy = ".") %>%
+  ggplot(aes(x = dummy, y = BLase , fill = value)) +
+  geom_tile() +
+  scale_fill_manual(values = c(
+      "no" = "white",
+      "yes" = "black"
+    )) +
+  theme_bw() +
+  ggtitle("Genotype") +
+  theme(
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.position = "none"
+  )
+
+o <- ggarrange(
+        m, n, 
+        nrow = 1, ncol = 2, widths = c(8, 1)
+        )
+
+o
+  
+ggsave(filename = ("KPCsample.pdf"), path = dir2, plot = o, dpi = 320, width = 7, height = 7, units = "in")
+```
+
+## ROC Plots for Susceptible and Non-Susceptible Results
+
+```{r}
+for (j in unique(data$species)){
+  for (k in c("Gent", "Fq", "Beta Lactam")){
+    
+    Species = ifelse(j == "Ec", "E. coli", "K. pneumoniae")
+    Drug = ifelse(k == "Fq", "Fluoroquinolone", ifelse(k == "Gent", "Aminoglycoside", k))
+    
+    dat = SVMdata_onSPD %>% 
+      filter((species == j) & (class == Drug)) %>% 
+      select(S_I_R, spd) %>% 
+      mutate(SR_01 = ifelse(S_I_R == "S", 0, 1)) 
+
+    z = dat %>%
+      roc(predictor = "spd", response = "SR_01")
+    
+    plot(z, main = paste0(Species, " Treated with ", Drug), print.auc = T)
+    
+  }
+}
+```
+
+## ROC Plots for Susceptible and Resistant Results
+
+```{r}
+for (j in unique(data$species)){
+  for (k in c("Gent", "Fq", "Beta Lactam")){
+    
+    Species = ifelse(j == "Ec", "E. coli", "K. pneumoniae")
+    Drug = ifelse(k == "Fq", "Fluoroquinolone", ifelse(k == "Gent", "Aminoglycoside", k))
+    
+    dat = SVMdata_onSPD %>% 
+      filter((species == j) & (class == Drug) & (S_I_R != "I")) %>% 
+      select(S_I_R, spd) %>% 
+      mutate(SR_01 = ifelse(S_I_R == "S", 0, 1)) 
+
+    z = dat %>%
+      roc(predictor = "spd", response = "SR_01")
+    
+    plot(z, main = paste0(Species, " Treated with ", Drug), print.auc = T)
+    
+  }
+}
+```
+
+```{r, fig.width=12, fig.height=8}
+CZ_MIC = read_excel(path = paste0(dir, "/CZ_MICs/CZ_redo.xlsx"), sheet = "Our MICs") %>%
+  select(c('samples', 'species', 'sample', 'drug', 'Our SIR', 'Our MIC', 'MIC from Clin Data', 'SIR from Clin Data')) %>% 
+  filter(!is.na(samples)) %>% 
+  mutate(
+    NewMIC =
+      ifelse(is.na((`Our MIC`)), 
+             "not measured", 
+             gsub(
+               ifelse(as.character(`Our MIC`) %in% c("1.0", "2.0", "1", "2"), "<=2", as.character(`Our MIC`)), 
+               pattern = ".0", 
+               replacement = "")),
+    `Clinical MIC` = factor(`MIC from Clin Data`, levels = c("<=4", "8", "16", ">=64")),
+    NewSIR = ifelse(is.na(`Our SIR`), "not measured", `Our SIR`),
+    `Clinical SIR` = factor(substr(`SIR from Clin Data`, start = 1, stop = 1), levels = c("S", "I", "R")),
+    sample = gsub(sample, pattern = "[.]0", replacement = ""),
+    sample = ifelse(
+      is.na(sample), 
+      gsub(samples, pattern = "MGHBC|_cz", replacement = ""), 
+      sample)
+    ) %>%
+  #left_join(select(SPD_data, c("samples", "spd"))) %>%
+  left_join(
+    filter(SVMdata_onSPD, drug == "Cefazolin") %>% 
+      mutate(sample = gsub(sample, pattern = "MGHBC", replacement = "")) %>%
+      select(!c("species", "drug")), 
+    by = "sample") %>% 
+  left_join((output_data_pivoted %>% select(id, BLase) %>% unique()), by = c("samples" = "id")) %>%
+  mutate(call = ifelse(`Predicted by` == "KPC content only", 
+                        "Correct, Predicted by KPC",
+                        ifelse(correct_call, "Correct", "Incorrect")),
+          outline = ifelse(BLase != "none", "Beta-lactamase Present", `call`)) %>%
+  arrange(species, `Clinical MIC`, `Clinical SIR`, spd)
+
+level_list = c("S: 1", "S: 2", "S: <=2", "S: <=4", "I: 4", "I: <=4", "R: 8", "R: 16", "R: >=64", "R: >=256", "not measured", "not measured: not measured")
+
+plot = CZ_MIC %>% 
+  mutate(
+    NewMIC = factor(NewMIC, levels = c("<=2", "4", "8", "16", ">=256", "not measured")), 
+    `Clinical MIC` = paste(`Clinical SIR`, `Clinical MIC`, sep = ": "),
+    `In Vitro MIC` = paste(`NewSIR`, `NewMIC`, sep = ": ")) %>%  #pull(`In Vitro MIC`) %>% unique() %>% unlist() %>% paste(sep = "', '") #`Clinical MIC`, 
+  mutate_at(c("Clinical MIC", "In Vitro MIC"), ~ifelse(.x == "not measured: not measured", "not measured", .x)) %>% 
+  mutate_at(c("Clinical MIC", "In Vitro MIC"), ~factor(.x, levels = level_list)) %>%
+  #c("S: 1", "S: 2", "I: 4", "R: 8", "R: 16", "R: >=64", "R: >=256", "not measured", "not measured: not measured")
+  ggplot(aes(y = `Clinical MIC`, x = `In Vitro MIC`, shape = species)) +
+  #geom_rect(xmin = which(level_list == "S: <=2")-0, xmax = which(level_list == "I: 4")+0, ymin = which(level_list == "S: <=4")-0, ymax = which(level_list == "I: <=4")+0, fill = "red") +
+  geom_rect(xmin = 0.5, xmax = 1.5, ymin = 0.5, ymax = 1.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 1.5, xmax = 2.5, ymin = 1.5, ymax = 2.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 2.5, xmax = 3.5, ymin = 2.5, ymax = 3.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 3.5, xmax = 4.5, ymin = 3.5, ymax = 4.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 4.5, xmax = 5.5, ymin = 4.5, ymax = 5.5, fill = "grey80", color = "black") +
+  scale_fill_viridis(option = "plasma") +
+  geom_jitter(aes(fill = spd), width = .4, height = .4, size = 4, color = "black") +
+  scale_shape_manual(values = c("Ec" = 21, "Kp" = 24)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(size = 1, linetype = 'solid', color = "black"))
+
+plot
+
+ggsave(filename = "CZ_data.pdf", path = dir2, plot = plot, dpi = 320, width = 12, height = 8, units = "in")
+
+plot = CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  mutate(
+    `NewMIC` = ifelse(`NewMIC` == ">=256", ">=64", `NewMIC`),
+    NewMIC = factor(NewMIC, levels = c("<=2", "4", "8", "16", ">=64", "not measured")),
+    `Clinical MIC` = paste(`Clinical SIR`, `Clinical MIC`, sep = ": "),
+    `In Vitro MIC` = paste(`NewSIR`, `NewMIC`, sep = ": "),
+    `Clinical MIC` = factor(`Clinical MIC`, levels = c("S: <=4", "I: <=4", "R: 8", "R: 16", "R: >=64")),
+    `In Vitro MIC` = factor(`In Vitro MIC`, levels = c("S: <=2", "I: 4", "R: 8", "R: 16", "R: >=64"))) %>%
+  #c("S: 1", "S: 2", "I: 4", "R: 8", "R: 16", "R: >=64", "R: >=256", "not measured", "not measured: not measured")
+  ggplot(aes(y = `Clinical MIC`, x = `In Vitro MIC`, shape = species)) +
+  #geom_rect(xmin = which(level_list == "S: <=2")-0, xmax = which(level_list == "I: 4")+0, ymin = which(level_list == "S: <=4")-0, ymax = which(level_list == "I: <=4")+0, fill = "red") +
+  geom_rect(xmin = 0.5, xmax = 1.5, ymin = 0.5, ymax = 1.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 1.5, xmax = 2.5, ymin = 1.5, ymax = 2.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 2.5, xmax = 3.5, ymin = 2.5, ymax = 3.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 3.5, xmax = 4.5, ymin = 3.5, ymax = 4.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 4.5, xmax = 5.5, ymin = 4.5, ymax = 5.5, fill = "grey80", color = "black") +
+  scale_fill_viridis(option = "plasma") +
+  scale_y_discrete(drop = FALSE) +
+  geom_jitter(aes(fill = spd), width = .4, height = .4, size = 4, color = "black") +
+  scale_shape_manual(values = c("Ec" = 21, "Kp" = 24)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(size = 1, linetype = 'solid', color = "black"))
+
+plot
+
+ggsave(filename = "CZ_data_trimmed.pdf", path = dir2, plot = plot, dpi = 320, width = 12, height = 8, units = "in")
+
+plot = CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+    mutate(
+    `NewMIC` = ifelse(`NewMIC` %in% c("8", "16", "64", ">=256"), ">=8", `NewMIC`),
+    NewMIC = factor(NewMIC, levels = c("<=2", "4", ">=8")),
+    `Clinical MIC` = paste(`Clinical SIR`, `Clinical MIC`, sep = ": "),
+    `In Vitro MIC` = paste(`NewSIR`, `NewMIC`, sep = ": "),
+    `Clinical MIC` = factor(`Clinical MIC`, levels = c("S: <=4", "I: <=4", "R: 8", "R: 16", "R: >=64")),
+    `In Vitro MIC` = factor(`In Vitro MIC`, levels = c("S: <=2", "I: 4", "R: >=8"))) %>%
+  ggplot(aes(y = `Clinical MIC`, x = `In Vitro MIC`, shape = species)) +
+  #geom_rect(xmin = which(level_list == "S: <=2")-0, xmax = which(level_list == "I: 4")+0, ymin = which(level_list == "S: <=4")-0, ymax = which(level_list == "I: <=4")+0, fill = "red") +
+  geom_rect(xmin = 0.5, xmax = 1.5, ymin = 0.5, ymax = 1.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 1.5, xmax = 2.5, ymin = 1.5, ymax = 2.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 2.5, xmax = 3.5, ymin = 2.5, ymax = 4.5, fill = "grey80", color = "black") +
+  scale_fill_viridis(option = "plasma") +
+  geom_jitter(aes(fill = spd), width = .4, height = .4, size = 4, color = "black") +
+  scale_shape_manual(values = c("Ec" = 21, "Kp" = 24)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(size = 1, linetype = 'solid', color = "black"))
+
+plot
+
+ggsave(filename = "CZ_data_collapsed.pdf", path = dir2, plot = plot, dpi = 320, width = 12, height = 8, units = "in")
+
+plot = CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  mutate_at(c("Clinical SIR", "NewSIR"), ~factor(.x, levels = c("S", "I", "R"))) %>%
+  ggplot(aes(y = `Clinical SIR`, x = `NewSIR`, shape = species)) +
+  #geom_rect(xmin = which(level_list == "S: <=2")-0, xmax = which(level_list == "I: 4")+0, ymin = which(level_list == "S: <=4")-0, ymax = which(level_list == "I: <=4")+0, fill = "red") +
+  geom_rect(xmin = 0.5, xmax = 1.5, ymin = 0.5, ymax = 1.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 1.5, xmax = 2.5, ymin = 1.5, ymax = 2.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 2.5, xmax = 3.5, ymin = 2.5, ymax = 3.5, fill = "grey80", color = "black") +
+  scale_fill_viridis(option = "plasma") +
+  geom_jitter(aes(fill = spd), width = .4, height = .4, size = 4, color = "black") +
+  scale_shape_manual(values = c("Ec" = 21, "Kp" = 24)) +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(size = 1, linetype = 'solid', color = "black"))
+
+plot
+
+ggsave(filename = "CZ_data_SIR.pdf", path = dir2, plot = plot, dpi = 320, width = 12, height = 8, units = "in")
+
+CZ_MIC %>% 
+  filter(NewMIC != "not measured" & species == "Ec") %>%
+  select(NewSIR, `Clinical SIR`) %>%
+  table
+
+CZ_MIC %>% 
+  filter(NewMIC != "not measured" & species == "Kp") %>%
+  select(NewSIR, `Clinical SIR`) %>%
+  table
+
+CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  select(NewSIR, `Clinical SIR`) %>%
+  table
+
+CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  select(pred_S_R, `Clinical SIR`) %>%
+  table
+
+CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  select(NewSIR, `pred_S_R`) %>%
+  table
+  
+plot = CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  mutate_at(c("Clinical SIR", "NewSIR"), ~factor(.x, levels = c("S", "I", "R"))) %>%
+  ggplot(aes(y = `Clinical SIR`, x = `NewSIR`, color = outline, fill = pred_S_R, shape = Species)) +
+  geom_rect(xmin = 0.5, xmax = 1.5, ymin = 0.5, ymax = 1.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 1.5, xmax = 2.5, ymin = 1.5, ymax = 2.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 2.5, xmax = 3.5, ymin = 2.5, ymax = 3.5, fill = "grey80", color = "black") +
+  geom_jitter(width = .4, height = .4, size = 4, color = "black") +
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(size = 1, linetype = 'solid', color = "black")) +
+  scale_color_manual(values = c("Correct" = "#0072B2", "Beta-lactamase Present" = "black", "Incorrect" = "#D55E00")) +
+  scale_shape_manual(values = c("E. coli" = 21, "K. pneumoniae" = 24)) +
+  #scale_fill_manual(values = c("Correct" = "#0072B2", "Correct, Predicted by KPC" = "#009E73", "Incorrect" = "#D55E00")) +
+  NULL
+
+
+plot
+
+ggsave(filename = "CZ_data_SVM.pdf", path = dir2, plot = plot, dpi = 320, width = 12, height = 8, units = "in")
+
+  
+```
+
+```{r SVM_on_PRP}
+
+## SVM Based on probe response data
+
+# mel_predict = data.frame(matrix(nrow = 0, ncol = 6))
+# colnames(mel_predict) = c("exp", "Strain", "S_I_R", "species", "class", "pred_S_R")
+# mgh_predict = data.frame(matrix(nrow = 0, ncol = 6))
+# colnames(mgh_predict) = c("exp", "species", "drug", "sample", "pred_S_R", "class")
+# output_mel_list = list()
+# 
+# tags = output_data_pivoted$tag %>% unique()
+# 
+# # separate mel data
+# for (y in c("Ec", "Kp")){
+#   for (z in c("Beta Lactam", "Gent", "Fq")){
+#     mel_temp = known_data_all %>%
+#       filter(species == y & class == z) %>%
+#       filter(tag %in% tags) %>%
+#       select(tag, value, S_I_R, exp, Strain, species, class) %>%
+#       mutate(value = ifelse(is.na(value), 0, value)) %>%
+#       pivot_wider(names_from = tag, values_from = value)
+#     
+#     # Set up Repeated k-fold Cross Validation
+#     train_control <- trainControl(method="repeatedcv", number=10, repeats=3)
+#     # Fit the model 
+#     svm2 <- train(S_I_R ~., 
+#                   data = select(filter(mel_temp, S_I_R != "I"), !c("exp", "Strain", "species", "class")), 
+#                   method = "svmLinear", 
+#                   trControl = train_control,  
+#                   class.weights= c("S" = 1, "R" = 2))
+#     #View the model
+#     svm2
+#     #predictions for mel data
+#     svmfit.pred <- predict(svm2, select(mel_temp, !c("exp", "Strain", "S_I_R")))
+#     #save predictions
+#     mel_predict = select(mel_temp, c("exp", "Strain", "S_I_R", "species", "class")) %>%
+#       mutate(pred_S_R = svmfit.pred) %>%
+#       rbind(mel_predict)
+#     
+#     if(z == "Beta Lactam"){
+#       for(aa in c("Atm", "Cro", "Cz", "Fep", "Tzp", "Etp", "Mem")){
+#         mgh_temp = output_list[[paste0(y, aa)]] %>% t()
+#         if(sum(is.na(mgh_temp)) > 0){
+#           order_temp = mgh_temp %>% abs() %>% rowMeans(na.rm = T) %>% sort() %>% names()
+#           mgh_temp = mgh_temp[order_temp,]
+#           mgh_temp_NaReplace = mgh_temp
+#           #get entries that are na values
+#           #mgh_temp %>% apply(1:2, function(x) if(is.na(x)) )
+#           mgh_temp_isNA = which(is.na(mgh_temp), TRUE)
+#           for(i in 1:nrow(mgh_temp_isNA)){
+#             ##find rows with closest responsiveness to NA sample:
+#             # mean responsiveness of each sample
+#             means_temp_2 = mgh_temp %>% abs() %>% rowMeans(na.rm = T)
+#             # means subtracted with the rowmean of our sample
+#             means_temp_sub = means_temp_2 - means_temp_2[mgh_temp_isNA[i, 1]]
+#             # sort by how close each rowmean is to our sample
+#             means_temp_sub_closest_names = means_temp_sub %>% abs() %>% sort() %>% names()
+#             # get samples with an na value in this probe to exclude
+#             exclude_na = rownames(mgh_temp)[(is.na(mgh_temp[,mgh_temp_isNA[i, 2]]))]
+#             # select two closest samples that don't have na values for this probe
+#             means_closest = means_temp_sub_closest_names[!(means_temp_sub_closest_names %in% exclude_na)][1:2]
+#             # replace NA with mean of probe responses to the two closest samples
+#             mgh_temp_NaReplace[mgh_temp_isNA[i, 1], mgh_temp_isNA[i, 2]] = mean(mgh_temp_NaReplace[c(means_closest), mgh_temp_isNA[i, 2]], na.rm = T)
+#           }
+#         }else{mgh_temp_NaReplace = mgh_temp}
+#         svmfit.pred <- predict(svm2, mgh_temp_NaReplace)
+#         mgh_temp_df = data.frame(exp = paste0(y, aa), 
+#                                  species = y,
+#                                  class = z,
+#                                  drug = aa,
+#                                  sample = gsub(rownames(mgh_temp_NaReplace), pattern = "_.*", replacement = ""),
+#                                  pred_S_R = svmfit.pred)
+#         mgh_predict = mgh_temp_df %>% rbind(mgh_predict)
+#       }
+#     }else if(z == "Fq"){
+#       for(aa in c("Levo", "Cip")){
+#         mgh_temp = output_list[[paste0(y, aa)]] %>% t()
+#         if(sum(is.na(mgh_temp)) > 0){
+#           order_temp = mgh_temp %>% abs() %>% rowMeans(na.rm = T) %>% sort() %>% names()
+#           mgh_temp = mgh_temp[order_temp,]
+#           mgh_temp_NaReplace = mgh_temp
+#           #get entries that are na values
+#           #mgh_temp %>% apply(1:2, function(x) if(is.na(x)) )
+#           mgh_temp_isNA = which(is.na(mgh_temp), TRUE)
+#           for(i in 1:nrow(mgh_temp_isNA)){
+#             ##find rows with closest responsiveness to NA sample:
+#             # mean responsiveness of each sample
+#             means_temp_2 = mgh_temp %>% abs() %>% rowMeans(na.rm = T)
+#             # means subtracted with the rowmean of our sample
+#             means_temp_sub = means_temp_2 - means_temp_2[mgh_temp_isNA[i, 1]]
+#             # sort by how close each rowmean is to our sample
+#             means_temp_sub_closest_names = means_temp_sub %>% abs() %>% sort() %>% names()
+#             # get samples with an na value in this probe to exclude
+#             exclude_na = rownames(mgh_temp)[(is.na(mgh_temp[,mgh_temp_isNA[i, 2]]))]
+#             # select two closest samples that don't have na values for this probe
+#             means_closest = means_temp_sub_closest_names[!(means_temp_sub_closest_names %in% exclude_na)][1:2]
+#             # replace NA with mean of probe responses to the two closest samples
+#             mgh_temp_NaReplace[mgh_temp_isNA[i, 1], mgh_temp_isNA[i, 2]] = mean(mgh_temp_NaReplace[c(means_closest), mgh_temp_isNA[i, 2]], na.rm = T)
+#           }
+#         }else{mgh_temp_NaReplace = mgh_temp}
+#         svmfit.pred <- predict(svm2, mgh_temp_NaReplace)
+#         mgh_temp_df = data.frame(exp = paste0(y, aa), 
+#                                  species = y,
+#                                  class = z,
+#                                  drug = aa,
+#                                  sample = gsub(rownames(mgh_temp_NaReplace), pattern = "_.*", replacement = ""),
+#                                  pred_S_R = svmfit.pred)
+#         mgh_predict = mgh_temp_df %>% rbind(mgh_predict)
+#       }
+#     }else if(z == "Gent"){
+#       aa = "Gent"
+#       mgh_temp = output_list[[paste0(y, aa)]] %>% t()
+#       #to replace Na values
+#       if(sum(is.na(mgh_temp)) > 0){
+#         order_temp = mgh_temp %>% abs() %>% rowMeans(na.rm = T) %>% sort() %>% names()
+#         mgh_temp = mgh_temp[order_temp,]
+#         mgh_temp_NaReplace = mgh_temp
+#         #get entries that are na values
+#         #mgh_temp %>% apply(1:2, function(x) if(is.na(x)) )
+#         mgh_temp_isNA = which(is.na(mgh_temp), TRUE)
+#         for(i in 1:nrow(mgh_temp_isNA)){
+#           ##find rows with closest responsiveness to NA sample:
+#           # mean responsiveness of each sample
+#           means_temp_2 = mgh_temp %>% abs() %>% rowMeans(na.rm = T)
+#           # means subtracted with the rowmean of our sample
+#           means_temp_sub = means_temp_2 - means_temp_2[mgh_temp_isNA[i, 1]]
+#           # sort by how close each rowmean is to our sample
+#           means_temp_sub_closest_names = means_temp_sub %>% abs() %>% sort() %>% names()
+#           # get samples with an na value in this probe to exclude
+#           exclude_na = rownames(mgh_temp)[(is.na(mgh_temp[,mgh_temp_isNA[i, 2]]))]
+#           # select two closest samples that don't have na values for this probe
+#           means_closest = means_temp_sub_closest_names[!(means_temp_sub_closest_names %in% exclude_na)][1:2]
+#           # replace NA with mean of probe responses to the two closest samples
+#           mgh_temp_NaReplace[mgh_temp_isNA[i, 1], mgh_temp_isNA[i, 2]] = mean(mgh_temp_NaReplace[c(means_closest), mgh_temp_isNA[i, 2]], na.rm = T)
+#         }
+#       }else{mgh_temp_NaReplace = mgh_temp}
+#       svmfit.pred <- predict(svm2, mgh_temp_NaReplace)
+#       mgh_temp_df = data.frame(exp = paste0(y, aa), 
+#                                species = y,
+#                                class = z,
+#                                drug = aa,
+#                                sample = gsub(rownames(mgh_temp_NaReplace), pattern = "_.*", replacement = ""),
+#                                pred_S_R = svmfit.pred)
+#       mgh_predict = mgh_temp_df %>% rbind(mgh_predict)
+#     }
+#     
+#     if(z == "Beta Lactam"){z = "Bl"}
+#     output_mel_list[[paste0(y,z)]] = mel_temp
+#   }
+# }
+# 
+# ```
+# 
+# ```{r SVM_PRP_plot, fig.width=14, fig.height=14}
+# 
+# # use KPC to predict MEM and ERTA resistance
+# SVMdata = SVMdata %>% 
+#   mutate(result = ifelse((sample == "MGHBC48" & drug %in% c("Etp", "Mem")),
+#                          "True +", result))
+# SVMdata %>% 
+#   calculate_performance()
+# 
+# SVMdata = clin_data %>% 
+#   mutate(drug = str_to_title(Drug),
+#          S_I_R = substr(Susceptibility, 1, 1)) %>% 
+#   select(drug, sample, Susceptibility, S_I_R, spd) %>%
+#   right_join(mgh_predict, by = c("drug", "sample")) %>%
+#   mutate(result = 
+#             ifelse(S_I_R == pred_S_R,
+#                    # if the call was correct
+#                    ifelse(S_I_R == "S", "True -", "True +"),
+#                    # if the call was incorrect
+#                    ifelse(S_I_R == "I",
+#                           # if the strain was intermediate
+#                           ifelse(pred_S_R == "S", "called S", "called R"),
+#                           # if the strain was resistant
+#                           ifelse(S_I_R == "R", "False -", "False +")
+#                           )))
+#   
+# 
+# SVMdata %>%
+#   mutate(`Susceptibility and Prediction` = 
+#            factor(paste(sep = ", ", S_I_R, result),
+#                   levels = c("S, False +", "S, True -", "I, called S", "I, called R", "R, False -", "R, True +"))) %>%
+#    ggplot(aes(x = drug, y = spd, color = `Susceptibility and Prediction`)) +
+#    geom_jitter(alpha = 0.7, width = 0.3, height = 0, size = 2.5) +
+#    theme_classic() +
+#    scale_colour_brewer(palette = "Paired") +
+#    facet_grid(rows = vars(species), cols = vars(class), scales = "free_x", space = "free_x")
+```

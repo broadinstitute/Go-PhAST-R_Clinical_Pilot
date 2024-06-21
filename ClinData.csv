@@ -1,0 +1,431 @@
+samples,species,s,drug,MIC,Susceptibility
+MGHBC19_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC19_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC19_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC19_cip,Kp,Kp,Ciprofloxacin,0.5,Intermediate
+MGHBC19_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC19_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC19_levo,Kp,Kp,Levofloxacin,1,Intermediate
+MGHBC19_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC19_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC19_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC34_cz,Kp,Kp,Cefazolin,64,Resistant
+MGHBC34_fep,Kp,Kp,Cefepime,64,Resistant
+MGHBC34_cro,Kp,Kp,Ceftriaxone,64,Resistant
+MGHBC34_cip,Kp,Kp,Ciprofloxacin,1,Resistant
+MGHBC34_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC34_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC34_levo,Kp,Kp,Levofloxacin,1,Intermediate
+MGHBC34_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC34_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC34_atm,Kp,Kp,Aztreonam,NA,Resistant
+MGHBC56_cz,Ec,Ec,Cefazolin,64,Resistant
+MGHBC56_fep,Ec,Ec,Cefepime,64,Resistant
+MGHBC56_cro,Ec,Ec,Ceftriaxone,64,Resistant
+MGHBC56_cip,Ec,Ec,Ciprofloxacin,1,Resistant
+MGHBC56_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC56_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC56_levo,Ec,Ec,Levofloxacin,1,Intermediate
+MGHBC56_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC56_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC56_atm,Ec,Ec,Aztreonam,NA,Resistant
+MGHBC4_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC4_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC4_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC4_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC4_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC4_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC4_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC4_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC4_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC4_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC5_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC5_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC5_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC5_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC5_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC5_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC5_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC5_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC5_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC5_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC6_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC6_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC6_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC6_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC6_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC6_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC6_levo,Ec,Ec,Levofloxacin,0.5,Susceptible
+MGHBC6_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC6_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC6_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC8_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC8_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC8_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC8_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC8_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC8_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC8_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC8_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC8_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC8_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC11_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC11_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC11_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC11_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC11_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC11_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC11_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC11_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC11_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC11_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC13_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC13_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC13_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC13_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC13_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC13_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC13_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC13_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC13_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC13_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC15_cz,Kp,Kp,Cefazolin,64,Resistant
+MGHBC15_fep,Kp,Kp,Cefepime,2,Susceptible
+MGHBC15_cro,Kp,Kp,Ceftriaxone,64,Resistant
+MGHBC15_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC15_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC15_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC15_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC15_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC15_tzp,Kp,Kp,Piperacillin Tazobactam,64/4,Intermediate
+MGHBC15_atm,Kp,Kp,Aztreonam,NA,Resistant
+MGHBC17ec_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC17ec_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC17ec_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC17ec_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC17ec_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC17ec_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC17ec_levo,Ec,Ec,Levofloxacin,1,Intermediate
+MGHBC17ec_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC17ec_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC17ec_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC17kp_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC17kp_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC17kp_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC17kp_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC17kp_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC17kp_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC17kp_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC17kp_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC17kp_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC17kp_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC21_cz,Ec,Ec,Cefazolin,64,Resistant
+MGHBC21_fep,Ec,Ec,Cefepime,2,Susceptible
+MGHBC21_cro,Ec,Ec,Ceftriaxone,64,Resistant
+MGHBC21_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC21_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC21_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC21_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC21_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC21_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC21_atm,Ec,Ec,Aztreonam,NA,Intermediate
+MGHBC23_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC23_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC23_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC23_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC23_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC23_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC23_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC23_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC23_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC23_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC26_cz,Kp,Kp,Cefazolin,4,Intermediate
+MGHBC26_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC26_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC26_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC26_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC26_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC26_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC26_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC26_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC26_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC27_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC27_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC27_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC27_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC27_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC27_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC27_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC27_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC27_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC27_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC28_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC28_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC28_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC28_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC28_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC28_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC28_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC28_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC28_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC28_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC29_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC29_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC29_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC29_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC29_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC29_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC29_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC29_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC29_tzp,Kp,Kp,Piperacillin Tazobactam,4-Aug,Susceptible
+MGHBC29_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC32_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC32_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC32_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC32_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC32_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC32_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC32_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC32_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC32_tzp,Kp,Kp,Piperacillin Tazobactam,4-Aug,Susceptible
+MGHBC32_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC33_cz,Ec,Ec,Cefazolin,16,Resistant
+MGHBC33_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC33_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC33_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC33_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC33_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC33_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC33_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC33_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC33_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC35_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC35_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC35_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC35_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC35_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC35_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC35_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC35_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC35_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC35_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC38_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC38_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC38_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC38_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC38_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC38_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC38_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC38_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC38_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC38_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC41_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC41_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC41_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC41_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC41_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC41_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC41_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC41_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC41_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC41_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC44_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC44_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC44_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC44_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC44_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC44_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC44_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC44_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC44_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC44_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC47_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC47_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC47_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC47_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC47_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC47_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC47_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC47_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC47_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC47_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC50_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC50_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC50_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC50_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC50_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC50_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC50_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC50_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC50_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC50_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC52_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC52_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC52_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC52_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC52_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC52_gent,Ec,Ec,Gentamicin,16,Resistant
+MGHBC52_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC52_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC52_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC52_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC53_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC53_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC53_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC53_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC53_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC53_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC53_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC53_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC53_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC53_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC55_cz,Ec,Ec,Cefazolin,8,Resistant
+MGHBC55_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC55_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC55_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC55_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC55_gent,Ec,Ec,Gentamicin,16,Resistant
+MGHBC55_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC55_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC55_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC55_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC57_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC57_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC57_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC57_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC57_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC57_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC57_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC57_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC57_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC57_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC60_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC60_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC60_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC60_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC60_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC60_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC60_levo,Ec,Ec,Levofloxacin,1,Intermediate
+MGHBC60_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC60_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC60_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC61_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC61_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC61_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC61_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC61_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC61_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC61_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC61_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC61_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC61_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC62_cz,Kp,Kp,Cefazolin,4,Susceptible
+MGHBC62_fep,Kp,Kp,Cefepime,1,Susceptible
+MGHBC62_cro,Kp,Kp,Ceftriaxone,1,Susceptible
+MGHBC62_cip,Kp,Kp,Ciprofloxacin,0.25,Susceptible
+MGHBC62_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC62_gent,Kp,Kp,Gentamicin,1,Susceptible
+MGHBC62_levo,Kp,Kp,Levofloxacin,0.12,Susceptible
+MGHBC62_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC62_tzp,Kp,Kp,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC62_atm,Kp,Kp,Aztreonam,NA,Susceptible
+MGHBC63_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC63_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC63_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC63_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC63_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC63_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC63_levo,Ec,Ec,Levofloxacin,0.12,Susceptible
+MGHBC63_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC63_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC63_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC64_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC64_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC64_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC64_cip,Ec,Ec,Ciprofloxacin,0.25,Susceptible
+MGHBC64_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC64_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC64_levo,Ec,Ec,Levofloxacin,1,Intermediate
+MGHBC64_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC64_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC64_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC12_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC12_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC12_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC12_cip,Ec,Ec,Ciprofloxacin,4,Resistant
+MGHBC12_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC12_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC12_levo,Ec,Ec,Levofloxacin,8,Resistant
+MGHBC12_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC12_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC12_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC14_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC14_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC14_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC14_cip,Ec,Ec,Ciprofloxacin,4,Resistant
+MGHBC14_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC14_gent,Ec,Ec,Gentamicin,16,Resistant
+MGHBC14_levo,Ec,Ec,Levofloxacin,8,Resistant
+MGHBC14_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC14_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC14_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC16_cz,Ec,Ec,Cefazolin,4,Intermediate
+MGHBC16_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC16_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC16_cip,Ec,Ec,Ciprofloxacin,4,Resistant
+MGHBC16_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC16_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC16_levo,Ec,Ec,Levofloxacin,8,Resistant
+MGHBC16_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC16_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC16_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC18_cz,Ec,Ec,Cefazolin,64,Resistant
+MGHBC18_fep,Ec,Ec,Cefepime,4,Intermediate
+MGHBC18_cro,Ec,Ec,Ceftriaxone,64,Resistant
+MGHBC18_cip,Ec,Ec,Ciprofloxacin,4,Resistant
+MGHBC18_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC18_gent,Ec,Ec,Gentamicin,16,Resistant
+MGHBC18_levo,Ec,Ec,Levofloxacin,8,Resistant
+MGHBC18_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC18_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC18_atm,Ec,Ec,Aztreonam,NA,Resistant
+MGHBC25_cz,Kp,Kp,Cefazolin,64,Resistant
+MGHBC25_fep,Kp,Kp,Cefepime,64,Resistant
+MGHBC25_cro,Kp,Kp,Ceftriaxone,64,Resistant
+MGHBC25_cip,Kp,Kp,Ciprofloxacin,4,Resistant
+MGHBC25_etp,Kp,Kp,Ertapenem,0.5,Susceptible
+MGHBC25_gent,Kp,Kp,Gentamicin,16,Resistant
+MGHBC25_levo,Kp,Kp,Levofloxacin,4,Resistant
+MGHBC25_mem,Kp,Kp,Meropenem,0.25,Susceptible
+MGHBC25_tzp,Kp,Kp,Piperacillin Tazobactam,16/4,Susceptible
+MGHBC25_atm,Kp,Kp,Aztreonam,NA,Resistant
+MGHBC48_cz,Kp,Kp,Cefazolin,64,Resistant
+MGHBC48_fep,Kp,Kp,Cefepime,2,Susceptible
+MGHBC48_cro,Kp,Kp,Ceftriaxone,16,Resistant
+MGHBC48_cip,Kp,Kp,Ciprofloxacin,4,Resistant
+MGHBC48_etp,Kp,Kp,Ertapenem,8,Resistant
+MGHBC48_gent,Kp,Kp,Gentamicin,8,Intermediate
+MGHBC48_levo,Kp,Kp,Levofloxacin,8-Apr,Resistant
+MGHBC48_mem,Kp,Kp,Meropenem,16,Resistant
+MGHBC48_tzp,Kp,Kp,Piperacillin Tazobactam,128/4,Resistant
+MGHBC48_atm,Kp,Kp,Aztreonam,NA,Resistant
+MGHBC51_cz,Ec,Ec,Cefazolin,4,Susceptible
+MGHBC51_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC51_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC51_cip,Ec,Ec,Ciprofloxacin,4,Resistant
+MGHBC51_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC51_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC51_levo,Ec,Ec,Levofloxacin,8,Resistant
+MGHBC51_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC51_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC51_atm,Ec,Ec,Aztreonam,NA,Susceptible
+MGHBC58_cz,Ec,Ec,Cefazolin,64,Resistant
+MGHBC58_fep,Ec,Ec,Cefepime,1,Susceptible
+MGHBC58_cro,Ec,Ec,Ceftriaxone,1,Susceptible
+MGHBC58_cip,Ec,Ec,Ciprofloxacin,4,Resistant
+MGHBC58_etp,Ec,Ec,Ertapenem,0.5,Susceptible
+MGHBC58_gent,Ec,Ec,Gentamicin,1,Susceptible
+MGHBC58_levo,Ec,Ec,Levofloxacin,8,Resistant
+MGHBC58_mem,Ec,Ec,Meropenem,0.25,Susceptible
+MGHBC58_tzp,Ec,Ec,Piperacillin Tazobactam,4-Apr,Susceptible
+MGHBC58_atm,Ec,Ec,Aztreonam,NA,Susceptible
