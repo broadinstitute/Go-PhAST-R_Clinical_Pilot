@@ -43,6 +43,8 @@ if(!require(viridis)) install.packages("viridis")
 library(viridis)
 if(!require(readxl)) install.packages("readxl")
 library(readxl)
+if(!require(ggbeeswarm)) install.packages("ggbeeswarm")
+library(ggbeeswarm)
 
 #file import
 remove_data = c("KpCip4_R11dn_KPHS_31980_0.95", "KpCip4_R12up_KPHS_40580_0.95") #, "EcGent4_Rup_b4550_0.92", "EcGent4_Rup_b3686e_0.92",        "EcGent4_Rup_b3687e_0.97")
@@ -667,6 +669,86 @@ output_data_pivoted_2 %>%
 # here
 ```
 
+```{r, fig.width= 16, fig.height=12}
+
+known_data_summary = known_data %>%
+  filter(use == "use") %>%
+  group_by(class, drug, species, S_I_R) %>%
+  summarise(`abs avg l2fc` = mean(abs(value), na.rm = T),
+            `number of samples` = n_distinct(Strain)) %>%
+  mutate(text = round(`abs avg l2fc`, digits = 1),
+         drug = recode(drug,
+         "Cefaz" = "Cefazolin",              
+         "cz" = "Cefazolin",
+         "Ctx"= "Ceftriaxone",
+         "cro"= "Ceftriaxone",
+         "Aztr" = "Aztreonam",
+         "atm" = "Aztreonam", 
+         "fep" = "Cefepime",
+         "Erta" = "Ertapenem",
+         "etp" = "Ertapenem", 
+         "Mero" = "Meropenem",
+         "mem" = "Meropenem",
+         "Pip" = "Piperacillin Tazobactam",
+         "tzp" = "Piperacillin Tazobactam",
+         "Cip" = "Ciprofloxacin",
+         "cip" = "Ciprofloxacin",
+         "Gent" = "Gentamicin",
+         "gent" = "Gentamicin",
+         "Levo" = "Levofloxacin",
+         "levo" = "Levofloxacin"),
+         class = factor(recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside"),
+                        levels = c("Beta Lactam", "Fluoroquinolone", "Aminoglycoside")),
+         drug = factor(drug, levels = c("Gentamicin", "Ciprofloxacin", "Levofloxacin", "Cefazolin", "Ceftriaxone", "Aztreonam", "Piperacillin Tazobactam", "Cefepime", "Ertapenem", "Meropenem")),
+         SIR = factor(substr(S_I_R, 1, 1), level = c("S", "I", "R")),
+         dataset = "Melanie") %>%
+  select(!c("S_I_R")) %>%
+  rbind(output_data_summary %>% 
+          dplyr::mutate(SIR = factor(substr(Susceptibility, 1, 1), level = c("S", "I", "R")),
+                        dataset = "Clinical")
+        ) %>%
+  filter(drug != "Cefazolin")
+
+known_data_summary %>%
+  filter(drug != "Cefazolin") %>%
+  ggplot(aes(y = `number of samples`, x = SIR , fill = `abs avg l2fc`)) +
+    geom_col(color = "black") +
+    scale_fill_viridis(option="inferno", begin = .15, end = 1, direction = -1) +
+    theme_bw() +
+    xlab("") +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(vjust=0.19), #angle = 90, 
+        ) +
+    facet_nested(species + dataset ~ class + drug, scales = "free_y", space = "free_y") +
+    NULL
+```
+
+```{r, fig.height=12, fig.width=6}
+known_data_summary %>%
+  mutate(`sum abs avg l2fc` = `abs avg l2fc` * `number of samples`) %>%
+  group_by(class, species, SIR, dataset) %>%
+  summarise(`number of samples` = sum(`number of samples`, na.rm = T),
+            `abs avg l2fc` = sum(`sum abs avg l2fc`, na.rm = T) / `number of samples`) %>%
+  mutate(text = round(`abs avg l2fc`, digits = 1)) %>%
+  ggplot(aes(y = `number of samples`, x = SIR , fill = `abs avg l2fc`)) +
+    geom_col(color = "black") +
+    scale_fill_viridis(option="inferno", begin = .15, end = 1, direction = -1) +
+    theme_bw() +
+    xlab("") +
+  scale_y_log10(breaks = scales::log_breaks(n = 10)) +
+    theme(
+        plot.title = element_text(hjust = 0.5),
+        plot.margin = margin(t = 0, b = 0, unit = "pt"),
+        axis.text.x = element_text(vjust=0.19), #angle = 90, 
+        ) +
+    facet_nested(species + dataset ~ class, scales = "free_y", space = "free_y") +
+    NULL
+  
+```
 
 ```{r heatmaps_by_antimicrobial, echo = FALSE} 
 graphDrug <- function(drug, plot = "classic"){ 
@@ -1149,6 +1231,8 @@ for (i in abx){
   x = graphDrug(i, plot = "SPDwSusceptibility")
   ggsave(filename = paste0(i, "_Heamap_SPD_noPoly.pdf"), path = dir2, plot = x, dpi = 320, width = 14, height = 7, units = "in")
 }
+
+graphDrug("Gent", plot = "SPDwSusceptibility")
 ```
 
 ```{r}
@@ -1158,9 +1242,12 @@ calculate_performance = function(df){
   temp_df = df %>% 
     summarise(
       n = n(),
-      Pos = sum(S_I_R == "R"),
       Neg = sum(S_I_R == "S"),
+      Pos = sum(S_I_R == "R"),
       Int = n - Pos - Neg,
+      NegR = Neg/n,
+      IntR = Int/n,
+      PosR = Pos/n,
       ## these calculations ignore I
       TruePos = sum((S_I_R == "R" & pred_S_R == "R")), # for true positive (positive for resistance)
       FalsePos = sum((S_I_R == "S" & pred_S_R == "R")), # major errors 
@@ -1445,6 +1532,35 @@ SVMdata_onSPD = SVMdata_onSPD %>%
    group_by(Species, class, result) %>%
    summarise(n = n()) %>%
    pivot_wider(names_from = result, values_from = n, values_fill = 0)
+ 
+ SVMdata_onSPD %>% 
+   filter(mel_data == 0) %>%
+   mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+   group_by(Species, class, drug) %>%
+   calculate_performance() %>%
+   write.csv(paste0(dir2, "/results_perdrug.csv"))
+ 
+ SVMdata_onSPD %>% 
+   filter(mel_data == 0) %>%
+   filter(!(drug == "cz" | drug == "Cefazolin")) %>%
+   mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+   group_by(class) %>%
+   calculate_performance() %>%
+   write.csv(paste0(dir2, "/results_perclass.csv"))
+ 
+ SVMdata_onSPD %>% 
+   filter(mel_data == 0) %>%
+   filter(!(drug == "cz" | drug == "Cefazolin")) %>%
+   mutate(class = recode(class,
+                        "Fq" = "Fluoroquinolone",
+                        "Gent" = "Aminoglycoside")) %>%
+   calculate_performance() %>%
+   write.csv(paste0(dir2, "/results_all.csv"))
+   
  
   results_1 = SVMdata_onSPD %>% 
     filter(mel_data == 0) %>%
@@ -1784,6 +1900,26 @@ plot
 
 ggsave(filename = "CZ_data_SVM.pdf", path = dir2, plot = plot, dpi = 320, width = 12, height = 8, units = "in")
 
+plot = CZ_MIC %>% 
+  filter(NewMIC != "not measured") %>%
+  mutate_at(c("Clinical SIR", "NewSIR"), ~factor(.x, levels = c("S", "I", "R"))) %>%
+  group_by(`Clinical SIR`, NewSIR, pred_S_R, Species) %>%
+  summarise(n = n_distinct(samples)) %>% #view()
+  ggplot(aes(y = `Clinical SIR`, x = `NewSIR`, fill = pred_S_R, shape = Species)) +
+  geom_rect(xmin = 0.5, xmax = 1.5, ymin = 0.5, ymax = 1.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 1.5, xmax = 2.5, ymin = 1.5, ymax = 2.5, fill = "grey80", color = "black") +
+  geom_rect(xmin = 2.5, xmax = 3.5, ymin = 2.5, ymax = 3.5, fill = "grey80", color = "black") +
+  geom_beeswarm(aes(size = n), color = "black", cex = 7, method = "center") +
+  scale_size(range = c(5, 15)) + 
+  theme(panel.background = element_rect(fill = "white", color = "black"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_line(size = 1, linetype = 'solid', color = "black")) +
+  scale_color_manual(values = c("S" = "#0072B2", "R" = "#D55E00")) +
+  scale_shape_manual(values = c("E. coli" = 21, "K. pneumoniae" = 24)) +
+  #scale_fill_manual(values = c("Correct" = "#0072B2", "Correct, Predicted by KPC" = "#009E73", "Incorrect" = "#D55E00")) +
+  NULL
+
+plot
   
 ```
 
