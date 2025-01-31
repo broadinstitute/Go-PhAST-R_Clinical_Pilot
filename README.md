@@ -1,5 +1,7 @@
 # Go-PhAST-R_Clinical_Pilot
 
+Young, E.L., Roach, D.J., Martinsen, M.A., McGrath, G.E., Holbrook, N.R., Cho, H.E., Seyoum, E.Y., Pierce, V.M. and Bhattacharyya, R.P., 2024. Clinical pilot of bacterial transcriptional profiling as a combined genotypic and phenotypic antimicrobial susceptibility test. Journal of Clinical Microbiology, 62(11), pp.e00997-24.
+
 Scripts:
 - HeatMapFuncs.R
   - Accessory functions for NSTGdata_calculations.R
